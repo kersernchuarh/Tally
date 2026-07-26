@@ -11,10 +11,9 @@ window.App = window.App || {};
 
 /**
  * Show the view matching `name` ("today" | "summary" | "trackers"),
- * hide the other two, and mark the matching tab button active.
- *
- * This — swap a CSS class, never touch page structure — is the pattern
- * every view in this app will follow: change data, then redraw from it.
+ * hide the other two, mark the matching tab button active, and re-render
+ * that view from current data — so it's always showing the latest state,
+ * even if it changed on a different tab.
  */
 function showView(name) {
   document.querySelectorAll('.view').forEach(function (section) {
@@ -24,6 +23,10 @@ function showView(name) {
   document.querySelectorAll('.tab').forEach(function (button) {
     button.classList.toggle('is-active', button.dataset.view === name);
   });
+
+  if (App.views[name] && App.views[name].render) {
+    App.views[name].render();
+  }
 }
 
 function renderHeaderDate() {
@@ -46,8 +49,11 @@ function init() {
     });
   });
 
-  // Phase 1+: App.views.trackers.render(), App.views.today.render(), etc.
-  // will be called here once each view has real data to show.
+  // Render every view once up front so each tab shows real data
+  // immediately, not just on first click.
+  Object.keys(App.views).forEach(function (name) {
+    if (App.views[name].render) App.views[name].render();
+  });
 }
 
 init();
