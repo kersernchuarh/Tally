@@ -1,16 +1,146 @@
 /* =========================================================================
    view-summary.js — renders the Summary tab
 
-   Weekly / monthly per-tracker totals, with period navigation (F8, F9 in
-   PRD.md §6). Built out in Phase 3.
+   Week/Month toggle, per-tracker totals for the selected period, and
+   prev/next navigation between periods (F8, F9 in PRD.md §6).
+
+   Totals include every tracker with at least one entry in the period —
+   including archived ones — so a past week's history stays accurate even
+   after a tracker is archived or renamed later.
    ========================================================================= */
 
 window.App = window.App || {};
-
 App.views = App.views || {};
 
-App.views.summary = {
-  // render() -> redraws #view-summary from App.store data.
-  // Filled in during Phase 3.
-  render: function () {}
-};
+(function () {
+  // Local UI state: which period is showing. Not saved data — just what
+  // this screen currently displays. Anchors default lazily to "now" the
+  // first time render() runs, so this file never calls Date-dependent
+  // code at load time.
+  var mode = 'week';
+  var weekAnchor = null;
+  var monthAnchor = null;
+
+  function ensureAnchors() {
+    if (!weekAnchor) weekAnchor = App.dates.todayString();
+    if (!monthAnchor) monthAnchor = App.dates.monthKey(App.dates.todayString());
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function entriesInWeek(entries, range) {
+    // Plain string comparison works because dates are "YYYY-MM-DD" —
+    // that format sorts identically whether compared as text or as time.
+    return entries.filter(function (e) { return e.date >= range.start && e.date <= range.end; });
+  }
+
+  function entriesInMonth(entries, key) {
+    return entries.filter(function (e) { return App.dates.monthKey(e.date) === key; });
+  }
+
+  function totalsByTracker(entries) {
+    var totals = {};
+    entries.forEach(function (e) {
+      totals[e.trackerId] = (totals[e.trackerId] || 0) + e.amount;
+    });
+    return totals;
+  }
+
+  function rowsHtml(totals, trackers) {
+    var rows = Object.keys(totals).map(function (id) {
+      var tracker = trackers.filter(function (t) { return t.id === id; })[0];
+      return {
+        name: tracker ? tracker.name : '(deleted tracker)',
+        unit: tracker ? tracker.unit : 'count',
+        total: totals[id]
+      };
+    });
+
+    if (rows.length === 0) {
+      return '<p class="empty-note">Nothing logged in this period.</p>';
+    }
+
+    rows.sort(function (a, b) { return b.total - a.total || a.name.localeCompare(b.name); });
+
+    return '<ul class="summary-list">' + rows.map(function (r) {
+      return (
+        '<li class="summary-list__row">' +
+          '<span class="summary-list__name">' + escapeHtml(r.name) + '</span>' +
+          '<span class="summary-list__total">' + App.format.amount(r.total, r.unit) + '</span>' +
+        '</li>'
+      );
+    }).join('') + '</ul>';
+  }
+
+  function render() {
+    var section = document.getElementById('view-summary');
+    if (!section) return;
+
+    ensureAnchors();
+    var data = App.store.load();
+
+    var html = '<h2 class="view-title">Summary</h2>';
+
+    html += '<div class="mode-toggle">' +
+      '<button type="button" class="mode-btn' + (mode === 'week' ? ' is-active' : '') +
+        '" data-action="set-mode" data-mode="week">Week</button>' +
+      '<button type="button" class="mode-btn' + (mode === 'month' ? ' is-active' : '') +
+        '" data-action="set-mode" data-mode="month">Month</button>' +
+    '</div>';
+
+    var label, body;
+
+    if (mode === 'week') {
+      var range = App.dates.weekRange(weekAnchor);
+      label = App.dates.weekLabel(range);
+      body = rowsHtml(totalsByTracker(entriesInWeek(data.entries, range)), data.trackers);
+    } else {
+      label = App.dates.monthLabel(monthAnchor);
+      body = rowsHtml(totalsByTracker(entriesInMonth(data.entries, monthAnchor)), data.trackers);
+    }
+
+    html += '<div class="period-nav">' +
+      '<button type="button" class="btn" data-action="prev" aria-label="Previous period">&larr;</button>' +
+      '<span class="period-nav__label">' + label + '</span>' +
+      '<button type="button" class="btn" data-action="next" aria-label="Next period">&rarr;</button>' +
+    '</div>';
+
+    html += body;
+
+    section.innerHTML = html;
+  }
+
+  function handleClick(e) {
+    var button = e.target.closest('button[data-action]');
+    if (!button) return;
+
+    var action = button.dataset.action;
+
+    if (action === 'set-mode') {
+      mode = button.dataset.mode;
+      render();
+      return;
+    }
+
+    if (action === 'prev' || action === 'next') {
+      var delta = action === 'prev' ? -1 : 1;
+      if (mode === 'week') {
+        weekAnchor = App.dates.addDays(weekAnchor, delta * 7);
+      } else {
+        monthAnchor = App.dates.shiftMonth(monthAnchor, delta);
+      }
+      render();
+    }
+  }
+
+  var section = document.getElementById('view-summary');
+  if (section) {
+    section.addEventListener('click', handleClick);
+  }
+
+  App.views.summary = { render: render };
+})();

@@ -123,6 +123,7 @@ Each is independent. Do one, all, or none.
 - **5a · Streaks** — "12 days in a row." Consecutive-date logic; a genuinely good exercise, and a classic source of off-by-one bugs worth meeting on purpose.
 - **5b · Chart** — a bar chart per tracker over time, hand-drawn in SVG. No library needed, and you'll understand charts properly afterwards.
 - **5c · Books / media** — a *collection*: items with status and progress rather than dated entries. New data shape, new screen, reuses the storage layer. This is where you'd learn to extend an existing design rather than restart.
+- **5d · Budgets** — a monthly spending cap per dollar-unit tracker, shown as a progress bar ("$62 of $100 spent this month"). Requested 2026-07-27 while thinking about what money-manager apps typically offer beyond simple logging. Your dollar trackers already act as categories, so this is the one gap: adds a `budget` field to a tracker and a comparison against Phase 3's monthly total for that tracker.
 
 ---
 

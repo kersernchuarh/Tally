@@ -111,6 +111,7 @@ Wanted, deliberately deferred so v1 can finish:
 - **Books / media** — a *collection*: items with changing status and progress, not dated log entries. This is a genuinely different data shape and deserves its own model rather than being forced into `trackers`/`entries`.
 - **Editing an existing entry** (v1 only deletes and re-adds).
 - **Cloud sync**, if I ever actually want my phone.
+- **Budgets** — a monthly spending cap per dollar-unit tracker with a progress bar. The one thing typical money-manager apps have that a plain log doesn't; dollar-unit trackers already double as expense categories, so this is a small addition on top rather than a new concept.
 
 ## 9. Technical decisions
 

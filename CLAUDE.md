@@ -43,7 +43,7 @@ Everything attaches to one global `App` namespace (`App.store`, `App.dates`, `Ap
 - [x] Phase 0 — skeleton, styles, tab navigation
 - [x] Phase 1 — storage + tracker management
 - [x] Phase 2 — logging + Today view
-- [ ] Phase 3 — weekly/monthly summary
+- [x] Phase 3 — weekly/monthly summary
 - [ ] Phase 4 — export/import + polish
 
 Update this checklist as phases complete.
