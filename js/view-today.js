@@ -1,17 +1,207 @@
 /* =========================================================================
    view-today.js — renders the Today tab
 
-   Shows each active tracker with today's total and a quick-log button,
-   plus today's individual entries (F4–F7, F11, F12 in PRD.md §6).
-   Built out in Phase 2.
+   Two ways to log, matching F4/F5 in PRD.md §6:
+     - a general log form: pick any active tracker, amount, date
+       (defaults to today), optional note — the full-featured path.
+     - a quick "+1" button on each count-unit tracker's summary card —
+       one tap, no form, per F5's "sensible default (1 for count units)".
+
+   Below that: today's totals per tracker, and today's individual entries
+   with delete (F7). Same render-from-data pattern as view-trackers.js.
    ========================================================================= */
 
 window.App = window.App || {};
-
 App.views = App.views || {};
 
-App.views.today = {
-  // render() -> redraws #view-today from App.store data.
-  // Filled in during Phase 2.
-  render: function () {}
-};
+(function () {
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function entriesForToday(data, today) {
+    return data.entries.filter(function (e) { return e.date === today; });
+  }
+
+  function totalFor(entries, trackerId) {
+    return entries
+      .filter(function (e) { return e.trackerId === trackerId; })
+      .reduce(function (sum, e) { return sum + e.amount; }, 0);
+  }
+
+  function trackerOptionsHtml(trackers) {
+    return trackers.map(function (t) {
+      return '<option value="' + t.id + '">' + escapeHtml(t.name) + '</option>';
+    }).join('');
+  }
+
+  function logFormHtml(activeTrackers, today) {
+    return (
+      '<form class="card log-form" data-action="log-submit">' +
+        '<div class="field">' +
+          '<label for="log-tracker">Tracker</label>' +
+          '<select id="log-tracker" name="trackerId">' + trackerOptionsHtml(activeTrackers) + '</select>' +
+        '</div>' +
+        '<div class="field">' +
+          '<label for="log-amount">Amount</label>' +
+          '<input type="number" id="log-amount" name="amount" min="0.01" step="any" required>' +
+        '</div>' +
+        '<div class="field">' +
+          '<label for="log-date">Date</label>' +
+          '<input type="date" id="log-date" name="date" value="' + today + '" required>' +
+        '</div>' +
+        '<div class="field">' +
+          '<label for="log-note">Note (optional)</label>' +
+          '<input type="text" id="log-note" name="note" placeholder="e.g. past papers">' +
+        '</div>' +
+        '<button type="submit" class="btn btn--primary">Log entry</button>' +
+      '</form>'
+    );
+  }
+
+  function summaryCardHtml(tracker, todaysEntries) {
+    var total = totalFor(todaysEntries, tracker.id);
+    var display = App.format.amount(total, tracker.unit);
+
+    var quickLog = tracker.unit === 'count'
+      ? '<button type="button" class="btn btn--primary quick-log-btn" data-action="quick-log" data-id="' + tracker.id + '">+1</button>'
+      : '';
+
+    return (
+      '<div class="summary-card">' +
+        '<div class="summary-card__info">' +
+          '<span class="summary-card__name">' + escapeHtml(tracker.name) + '</span>' +
+          '<span class="summary-card__total">' + display + '</span>' +
+        '</div>' +
+        quickLog +
+      '</div>'
+    );
+  }
+
+  function entryRowHtml(entry, tracker) {
+    var name = tracker ? tracker.name : '(deleted tracker)';
+    var display = tracker ? App.format.amount(entry.amount, tracker.unit) : entry.amount;
+
+    return (
+      '<li class="entry-row" data-id="' + entry.id + '">' +
+        '<div class="entry-row__info">' +
+          '<span class="entry-row__tracker">' + escapeHtml(name) + '</span>' +
+          '<span class="entry-row__amount">' + display + '</span>' +
+          (entry.note ? '<span class="entry-row__note">' + escapeHtml(entry.note) + '</span>' : '') +
+        '</div>' +
+        '<button type="button" class="btn btn--danger" data-action="delete-entry" data-id="' + entry.id + '">Delete</button>' +
+      '</li>'
+    );
+  }
+
+  function render() {
+    var section = document.getElementById('view-today');
+    if (!section) return;
+
+    var data = App.store.load();
+    var activeTrackers = data.trackers.filter(function (t) { return !t.archived; });
+    var today = App.dates.todayString();
+    var todaysEntries = entriesForToday(data, today);
+
+    var html = '<h2 class="view-title">Today</h2>';
+
+    if (data.trackers.length === 0) {
+      html +=
+        '<div class="placeholder">' +
+          '<p class="placeholder__label">No trackers yet</p>' +
+          '<p class="placeholder__text">Create a tracker first, then come back here to start logging.</p>' +
+          '<button type="button" class="btn btn--primary" data-action="go-to-trackers">Create a tracker</button>' +
+        '</div>';
+      section.innerHTML = html;
+      return;
+    }
+
+    if (activeTrackers.length === 0) {
+      html += '<p class="empty-note">All your trackers are archived. Restore one on the Trackers tab to log against it.</p>';
+      section.innerHTML = html;
+      return;
+    }
+
+    html += logFormHtml(activeTrackers, today);
+
+    html += '<div class="summary-cards">' +
+      activeTrackers.map(function (t) { return summaryCardHtml(t, todaysEntries); }).join('') +
+      '</div>';
+
+    html += '<h3 class="view-subtitle">Today’s entries</h3>';
+
+    if (todaysEntries.length === 0) {
+      html += '<p class="empty-note">Nothing logged yet today.</p>';
+    } else {
+      var sorted = todaysEntries.slice().sort(function (a, b) {
+        return b.createdAt.localeCompare(a.createdAt);
+      });
+      html += '<ul class="entry-list">' +
+        sorted.map(function (e) {
+          var tracker = data.trackers.filter(function (t) { return t.id === e.trackerId; })[0];
+          return entryRowHtml(e, tracker);
+        }).join('') +
+        '</ul>';
+    }
+
+    section.innerHTML = html;
+  }
+
+  function handleSubmit(e) {
+    var form = e.target.closest('form[data-action="log-submit"]');
+    if (!form) return;
+    e.preventDefault();
+
+    var trackerId = form.elements.trackerId.value;
+    var amount = form.elements.amount.value;
+    var date = form.elements.date.value;
+    var note = form.elements.note.value;
+
+    try {
+      App.store.addEntry(trackerId, amount, date, note);
+    } catch (err) {
+      alert(err.message);
+      return;
+    }
+
+    render();
+  }
+
+  function handleClick(e) {
+    var button = e.target.closest('button[data-action]');
+    if (!button) return;
+
+    var action = button.dataset.action;
+
+    if (action === 'go-to-trackers') {
+      showView('trackers');
+      return;
+    }
+
+    if (action === 'quick-log') {
+      try {
+        App.store.addEntry(button.dataset.id, 1, App.dates.todayString(), '');
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      render();
+      return;
+    }
+
+    if (action === 'delete-entry') {
+      App.store.deleteEntry(button.dataset.id);
+      render();
+    }
+  }
+
+  var section = document.getElementById('view-today');
+  if (section) {
+    section.addEventListener('submit', handleSubmit);
+    section.addEventListener('click', handleClick);
+  }
+
+  App.views.today = { render: render };
+})();

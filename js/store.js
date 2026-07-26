@@ -9,7 +9,7 @@
    Data shape (PRD.md §5), storage key "tally.v1":
      { version: 1, trackers: [...], entries: [...] }
 
-   Phase 1: trackers (this file). Phase 2 adds entries.
+   Phase 1 built trackers; Phase 2 added entries.
    ========================================================================= */
 
 window.App = window.App || {};
@@ -128,6 +128,37 @@ window.App = window.App || {};
     save(data);
   }
 
+  function addEntry(trackerId, amount, date, note) {
+    var data = load();
+    var tracker = findTracker(data, trackerId);
+    if (!tracker) throw new Error('Tracker not found.');
+
+    amount = Number(amount);
+    if (!isFinite(amount) || amount <= 0) {
+      throw new Error('Amount must be a positive number.');
+    }
+    if (!date) throw new Error('Date is required.');
+
+    var entry = {
+      id: generateId('e'),
+      trackerId: trackerId,
+      amount: amount,
+      date: date,
+      note: (note || '').trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    data.entries.push(entry);
+    save(data);
+    return entry;
+  }
+
+  function deleteEntry(id) {
+    var data = load();
+    data.entries = data.entries.filter(function (e) { return e.id !== id; });
+    save(data);
+  }
+
   App.store = {
     load: load,
     save: save,
@@ -135,6 +166,8 @@ window.App = window.App || {};
     renameTracker: renameTracker,
     archiveTracker: archiveTracker,
     restoreTracker: restoreTracker,
-    deleteTracker: deleteTracker
+    deleteTracker: deleteTracker,
+    addEntry: addEntry,
+    deleteEntry: deleteEntry
   };
 })();
