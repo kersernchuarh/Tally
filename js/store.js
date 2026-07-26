@@ -9,7 +9,8 @@
    Data shape (PRD.md §5), storage key "tally.v1":
      { version: 1, trackers: [...], entries: [...] }
 
-   Phase 1 built trackers; Phase 2 added entries.
+   Phase 1 built trackers; Phase 2 added entries; Phase 3 read-only via
+   dates.js; Phase 4 adds editing an entry and JSON import/export.
    ========================================================================= */
 
 window.App = window.App || {};
@@ -22,6 +23,61 @@ window.App = window.App || {};
     return { version: 1, trackers: [], entries: [] };
   }
 
+  function isNonEmptyString(v) {
+    return typeof v === 'string' && v.trim().length > 0;
+  }
+
+  function sanitizeTracker(t) {
+    if (!t || typeof t !== 'object') return null;
+    if (!isNonEmptyString(t.id) || !isNonEmptyString(t.name)) return null;
+
+    return {
+      id: t.id,
+      name: t.name,
+      unit: VALID_UNITS.indexOf(t.unit) !== -1 ? t.unit : 'count',
+      archived: !!t.archived,
+      createdAt: isNonEmptyString(t.createdAt) ? t.createdAt : new Date().toISOString()
+    };
+  }
+
+  function sanitizeEntry(e) {
+    if (!e || typeof e !== 'object') return null;
+    if (!isNonEmptyString(e.id) || !isNonEmptyString(e.trackerId)) return null;
+
+    var amount = Number(e.amount);
+    if (!isFinite(amount)) return null;
+    if (!isNonEmptyString(e.date)) return null;
+
+    return {
+      id: e.id,
+      trackerId: e.trackerId,
+      amount: amount,
+      date: e.date,
+      note: typeof e.note === 'string' ? e.note : '',
+      createdAt: isNonEmptyString(e.createdAt) ? e.createdAt : new Date().toISOString()
+    };
+  }
+
+  /**
+   * Turns "whatever came out of JSON.parse" into a data object we can
+   * trust, dropping anything malformed instead of crashing on it. Used
+   * both for normal load() and for importing a backup file — a hand-
+   * edited or corrupted JSON file should never be able to break the app.
+   */
+  function sanitize(raw) {
+    if (!raw || typeof raw !== 'object') return defaultData();
+
+    var trackers = Array.isArray(raw.trackers)
+      ? raw.trackers.map(sanitizeTracker).filter(Boolean)
+      : [];
+
+    var entries = Array.isArray(raw.entries)
+      ? raw.entries.map(sanitizeEntry).filter(Boolean)
+      : [];
+
+    return { version: 1, trackers: trackers, entries: entries };
+  }
+
   /**
    * Reads and parses the stored data. Falls back to an empty-but-valid
    * shape if nothing is stored yet, or if what's stored is corrupt —
@@ -32,12 +88,7 @@ window.App = window.App || {};
     if (!raw) return defaultData();
 
     try {
-      var data = JSON.parse(raw);
-      if (!data || typeof data !== 'object') return defaultData();
-      if (!Array.isArray(data.trackers)) data.trackers = [];
-      if (!Array.isArray(data.entries)) data.entries = [];
-      data.version = data.version || 1;
-      return data;
+      return sanitize(JSON.parse(raw));
     } catch (err) {
       return defaultData();
     }
@@ -159,6 +210,44 @@ window.App = window.App || {};
     save(data);
   }
 
+  function updateEntry(id, amount, date, note) {
+    var data = load();
+    var entry = data.entries.filter(function (e) { return e.id === id; })[0];
+    if (!entry) throw new Error('Entry not found.');
+
+    amount = Number(amount);
+    if (!isFinite(amount) || amount <= 0) {
+      throw new Error('Amount must be a positive number.');
+    }
+    if (!date) throw new Error('Date is required.');
+
+    entry.amount = amount;
+    entry.date = date;
+    entry.note = (note || '').trim();
+    save(data);
+    return entry;
+  }
+
+  /**
+   * Replaces ALL current data with a backup file's contents. Deliberately
+   * a full replace, not a merge — matches the export/import round trip
+   * described in ROADMAP.md Phase 4 ("delete a tracker, re-import, and
+   * everything comes back"). The view confirms with the user before
+   * calling this, since it's destructive to whatever's currently stored.
+   */
+  function importData(jsonString) {
+    var parsed;
+    try {
+      parsed = JSON.parse(jsonString);
+    } catch (err) {
+      throw new Error('That file is not valid JSON.');
+    }
+
+    var data = sanitize(parsed);
+    save(data);
+    return data;
+  }
+
   App.store = {
     load: load,
     save: save,
@@ -168,6 +257,8 @@ window.App = window.App || {};
     restoreTracker: restoreTracker,
     deleteTracker: deleteTracker,
     addEntry: addEntry,
-    deleteEntry: deleteEntry
+    deleteEntry: deleteEntry,
+    updateEntry: updateEntry,
+    importData: importData
   };
 })();

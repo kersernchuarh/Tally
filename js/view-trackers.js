@@ -1,7 +1,9 @@
 /* =========================================================================
    view-trackers.js — renders the Trackers tab
 
-   Create / rename / archive / restore / delete trackers (F1–F3, PRD.md §6).
+   Create / rename / archive / restore / delete trackers (F1–F3, PRD.md §6),
+   plus a Backup card (Phase 4) to export/import the whole data file as
+   JSON — the mitigation for localStorage being wipeable (PRD.md §11).
 
    Pattern used throughout this app: render() rebuilds the section's HTML
    entirely from App.store data every time something changes. Nothing here
@@ -130,6 +132,18 @@ App.views = App.views || {};
       }
     }
 
+    html +=
+      '<div class="card backup-card">' +
+        '<p class="backup-card__title">Backup</p>' +
+        '<p class="backup-card__hint">Your data lives only in this browser. Export a backup regularly, ' +
+          'especially before clearing browser data — see PRD.md §11.</p>' +
+        '<div class="backup-card__actions">' +
+          '<button type="button" class="btn" data-action="export">Export backup</button>' +
+          '<button type="button" class="btn" data-action="import-trigger">Import backup</button>' +
+        '</div>' +
+        '<input type="file" id="import-file-input" accept="application/json,.json" hidden>' +
+      '</div>';
+
     section.innerHTML = html;
   }
 
@@ -218,13 +232,67 @@ App.views = App.views || {};
     if (action === 'toggle-archived') {
       showArchived = !showArchived;
       render();
+      return;
     }
+
+    if (action === 'export') {
+      var data = App.store.load();
+      var json = JSON.stringify(data, null, 2);
+      var blob = new Blob([json], { type: 'application/json' });
+      var url = URL.createObjectURL(blob);
+
+      var link = document.createElement('a');
+      link.href = url;
+      link.download = 'tally-backup-' + App.dates.todayString() + '.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      return;
+    }
+
+    if (action === 'import-trigger') {
+      document.getElementById('import-file-input').click();
+    }
+  }
+
+  function handleChange(e) {
+    if (e.target.id !== 'import-file-input') return;
+
+    var file = e.target.files[0];
+    if (!file) return;
+
+    if (!window.confirm('Import will replace all current data with this backup. Continue?')) {
+      e.target.value = '';
+      return;
+    }
+
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        App.store.importData(reader.result);
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      render();
+    };
+    reader.readAsText(file);
+  }
+
+  function handleKeydown(e) {
+    if (e.key !== 'Escape') return;
+    if (!e.target.closest('form[data-action="rename-submit"]')) return;
+    editingId = null;
+    render();
   }
 
   var section = document.getElementById('view-trackers');
   if (section) {
     section.addEventListener('submit', handleSubmit);
     section.addEventListener('click', handleClick);
+    section.addEventListener('change', handleChange);
+    section.addEventListener('keydown', handleKeydown);
   }
 
   App.views.trackers = { render: render };

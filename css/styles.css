@@ -334,6 +334,27 @@ body {
   font-size: 0.9375rem;
 }
 
+.backup-card {
+  margin-top: var(--space-5);
+}
+
+.backup-card__title {
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.backup-card__hint {
+  color: var(--color-text-dim);
+  font-size: 0.8125rem;
+  margin-bottom: var(--space-3);
+}
+
+.backup-card__actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
 /* ---- Today view (Phase 2) ------------------------------------------------ */
 .view-subtitle {
   font-size: 1rem;
@@ -432,11 +453,35 @@ body {
   font-style: italic;
 }
 
-.entry-row .btn--danger {
+.entry-row__actions {
+  display: flex;
+  gap: var(--space-2);
   flex-shrink: 0;
+}
+
+.entry-row__actions .btn {
   padding: var(--space-1) var(--space-3);
   font-size: 0.8125rem;
 }
+
+.entry-edit-form {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+}
+
+.entry-edit-form input {
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.entry-edit-form input[name="amount"] { width: 90px; }
+.entry-edit-form input[name="date"] { width: 150px; }
+.entry-edit-form input[name="note"] { flex: 1; min-width: 120px; }
 
 /* ---- Summary view (Phase 3) ----------------------------------------------- */
 .mode-toggle {

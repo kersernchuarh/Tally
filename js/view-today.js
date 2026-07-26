@@ -8,13 +8,19 @@
        one tap, no form, per F5's "sensible default (1 for count units)".
 
    Below that: today's totals per tracker, and today's individual entries
-   with delete (F7). Same render-from-data pattern as view-trackers.js.
+   with edit and delete (F7). Same render-from-data pattern as
+   view-trackers.js. Editing an entry follows the same inline-form
+   pattern as renaming a tracker: click Edit, the row becomes a form,
+   Escape or Cancel backs out without saving.
    ========================================================================= */
 
 window.App = window.App || {};
 App.views = App.views || {};
 
 (function () {
+  // Which entry (if any) is mid-edit. Not saved data — just UI state.
+  var editingEntryId = null;
+
   function escapeHtml(str) {
     var div = document.createElement('div');
     div.textContent = str;
@@ -82,6 +88,21 @@ App.views = App.views || {};
 
   function entryRowHtml(entry, tracker) {
     var name = tracker ? tracker.name : '(deleted tracker)';
+
+    if (editingEntryId === entry.id) {
+      return (
+        '<li class="entry-row" data-id="' + entry.id + '">' +
+          '<form class="entry-edit-form" data-action="edit-entry-submit" data-id="' + entry.id + '">' +
+            '<input type="number" name="amount" value="' + entry.amount + '" min="0.01" step="any" required aria-label="Amount">' +
+            '<input type="date" name="date" value="' + entry.date + '" required aria-label="Date">' +
+            '<input type="text" name="note" value="' + escapeHtml(entry.note || '') + '" placeholder="Note" aria-label="Note">' +
+            '<button type="submit" class="btn btn--primary">Save</button>' +
+            '<button type="button" class="btn" data-action="edit-entry-cancel">Cancel</button>' +
+          '</form>' +
+        '</li>'
+      );
+    }
+
     var display = tracker ? App.format.amount(entry.amount, tracker.unit) : entry.amount;
 
     return (
@@ -91,7 +112,10 @@ App.views = App.views || {};
           '<span class="entry-row__amount">' + display + '</span>' +
           (entry.note ? '<span class="entry-row__note">' + escapeHtml(entry.note) + '</span>' : '') +
         '</div>' +
-        '<button type="button" class="btn btn--danger" data-action="delete-entry" data-id="' + entry.id + '">Delete</button>' +
+        '<div class="entry-row__actions">' +
+          '<button type="button" class="btn" data-action="edit-entry" data-id="' + entry.id + '">Edit</button>' +
+          '<button type="button" class="btn btn--danger" data-action="delete-entry" data-id="' + entry.id + '">Delete</button>' +
+        '</div>' +
       '</li>'
     );
   }
@@ -150,23 +174,41 @@ App.views = App.views || {};
   }
 
   function handleSubmit(e) {
-    var form = e.target.closest('form[data-action="log-submit"]');
+    var form = e.target.closest('form[data-action]');
     if (!form) return;
     e.preventDefault();
 
-    var trackerId = form.elements.trackerId.value;
-    var amount = form.elements.amount.value;
-    var date = form.elements.date.value;
-    var note = form.elements.note.value;
+    var action = form.dataset.action;
 
-    try {
-      App.store.addEntry(trackerId, amount, date, note);
-    } catch (err) {
-      alert(err.message);
-      return;
+    if (action === 'log-submit') {
+      var trackerId = form.elements.trackerId.value;
+      var amount = form.elements.amount.value;
+      var date = form.elements.date.value;
+      var note = form.elements.note.value;
+
+      try {
+        App.store.addEntry(trackerId, amount, date, note);
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+
+      render();
     }
 
-    render();
+    if (action === 'edit-entry-submit') {
+      var id = form.dataset.id;
+
+      try {
+        App.store.updateEntry(id, form.elements.amount.value, form.elements.date.value, form.elements.note.value);
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+
+      editingEntryId = null;
+      render();
+    }
   }
 
   function handleClick(e) {
@@ -194,13 +236,33 @@ App.views = App.views || {};
     if (action === 'delete-entry') {
       App.store.deleteEntry(button.dataset.id);
       render();
+      return;
     }
+
+    if (action === 'edit-entry') {
+      editingEntryId = button.dataset.id;
+      render();
+      return;
+    }
+
+    if (action === 'edit-entry-cancel') {
+      editingEntryId = null;
+      render();
+    }
+  }
+
+  function handleKeydown(e) {
+    if (e.key !== 'Escape') return;
+    if (!e.target.closest('form[data-action="edit-entry-submit"]')) return;
+    editingEntryId = null;
+    render();
   }
 
   var section = document.getElementById('view-today');
   if (section) {
     section.addEventListener('submit', handleSubmit);
     section.addEventListener('click', handleClick);
+    section.addEventListener('keydown', handleKeydown);
   }
 
   App.views.today = { render: render };
