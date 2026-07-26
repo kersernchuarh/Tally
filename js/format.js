@@ -40,7 +40,14 @@ window.App = window.App || {};
     return formatCount(value);
   }
 
+  var UNIT_EMOJI = { minutes: '⏱️', count: '✅', dollars: '💰' };
+
+  function unitEmoji(unit) {
+    return UNIT_EMOJI[unit] || '';
+  }
+
   App.format = {
-    amount: amount
+    amount: amount,
+    unitEmoji: unitEmoji
   };
 })();

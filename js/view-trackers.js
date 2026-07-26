@@ -29,7 +29,8 @@ App.views = App.views || {};
 
   function unitLabel(unit) {
     var match = UNITS.filter(function (u) { return u.value === unit; })[0];
-    return match ? match.label : unit;
+    var label = match ? match.label : unit;
+    return App.format.unitEmoji(unit) + ' ' + label;
   }
 
   /** Escapes text before it goes into innerHTML, so a tracker named
@@ -43,7 +44,7 @@ App.views = App.views || {};
   function unitOptionsHtml(selected) {
     return UNITS.map(function (u) {
       return '<option value="' + u.value + '"' + (u.value === selected ? ' selected' : '') + '>' +
-        u.label + '</option>';
+        App.format.unitEmoji(u.value) + ' ' + u.label + '</option>';
     }).join('');
   }
 
@@ -65,7 +66,10 @@ App.views = App.views || {};
     return (
       '<li class="tracker-row' + (tracker.archived ? ' tracker-row--archived' : '') + '" data-id="' + tracker.id + '">' +
         '<div class="tracker-row__info">' +
-          '<span class="tracker-row__name">' + escapeHtml(tracker.name) + '</span>' +
+          '<span class="tracker-row__name">' +
+            '<span class="dot" style="background:' + tracker.color + '"></span>' +
+            escapeHtml(tracker.name) +
+          '</span>' +
           '<span class="tracker-row__meta">' + unitLabel(tracker.unit) + ' &middot; ' + countLabel + '</span>' +
         '</div>' +
         '<div class="tracker-row__actions">' +
@@ -81,6 +85,48 @@ App.views = App.views || {};
 
   function countEntriesFor(data, trackerId) {
     return data.entries.filter(function (e) { return e.trackerId === trackerId; }).length;
+  }
+
+  function downloadFile(filename, content, mimeType) {
+    var blob = new Blob([content], { type: mimeType });
+    var url = URL.createObjectURL(blob);
+
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
+  function csvField(value) {
+    var str = String(value);
+    if (/[",\n]/.test(str)) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  }
+
+  function toCsv(data) {
+    var rows = [['Date', 'Tracker', 'Unit', 'Amount', 'Note']];
+
+    var sorted = data.entries.slice().sort(function (a, b) {
+      return a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt);
+    });
+
+    sorted.forEach(function (e) {
+      var tracker = data.trackers.filter(function (t) { return t.id === e.trackerId; })[0];
+      rows.push([
+        e.date,
+        tracker ? tracker.name : '(deleted tracker)',
+        tracker ? tracker.unit : '',
+        e.amount,
+        e.note || ''
+      ]);
+    });
+
+    return rows.map(function (row) { return row.map(csvField).join(','); }).join('\r\n');
   }
 
   function render() {
@@ -135,10 +181,12 @@ App.views = App.views || {};
     html +=
       '<div class="card backup-card">' +
         '<p class="backup-card__title">Backup</p>' +
-        '<p class="backup-card__hint">Your data lives only in this browser. Export a backup regularly, ' +
-          'especially before clearing browser data — see PRD.md §11.</p>' +
+        '<p class="backup-card__hint">Your data lives only in this browser. Export a JSON backup regularly, ' +
+          'especially before clearing browser data — see PRD.md §11. CSV is one-way, for opening in a ' +
+          'spreadsheet; only the JSON backup can be imported back in.</p>' +
         '<div class="backup-card__actions">' +
-          '<button type="button" class="btn" data-action="export">Export backup</button>' +
+          '<button type="button" class="btn" data-action="export">Export backup (JSON)</button>' +
+          '<button type="button" class="btn" data-action="export-csv">Export as CSV</button>' +
           '<button type="button" class="btn" data-action="import-trigger">Import backup</button>' +
         '</div>' +
         '<input type="file" id="import-file-input" accept="application/json,.json" hidden>' +
@@ -237,17 +285,20 @@ App.views = App.views || {};
 
     if (action === 'export') {
       var data = App.store.load();
-      var json = JSON.stringify(data, null, 2);
-      var blob = new Blob([json], { type: 'application/json' });
-      var url = URL.createObjectURL(blob);
+      downloadFile(
+        'tally-backup-' + App.dates.todayString() + '.json',
+        JSON.stringify(data, null, 2),
+        'application/json'
+      );
+      return;
+    }
 
-      var link = document.createElement('a');
-      link.href = url;
-      link.download = 'tally-backup-' + App.dates.todayString() + '.json';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+    if (action === 'export-csv') {
+      downloadFile(
+        'tally-export-' + App.dates.todayString() + '.csv',
+        toCsv(App.store.load()),
+        'text/csv'
+      );
       return;
     }
 

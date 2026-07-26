@@ -45,6 +45,7 @@ Stored as a single JSON object in browser `localStorage` under the key `tally.v1
       "id": "t_k3x9",              // generated, never reused, never changes
       "name": "Math study",
       "unit": "minutes",           // "minutes" | "count" | "dollars"
+      "color": "#3182ce",          // decorative accent dot, auto-assigned from a fixed palette
       "archived": false,           // hidden from Today, but its entries survive
       "createdAt": "2026-07-26T14:02:11.000Z"
     }
@@ -150,3 +151,19 @@ v1 is done when all of the following are true:
 4. **I have used it for 7 consecutive days without asking for a code change to keep using it.**
 
 Criterion 4 is the real one. The first three prove the app runs; the fourth proves it's a tool.
+
+## 13. Post-v1 additions (2026-07-27)
+
+A design-and-features pass done after v1 shipped, requested as "make the design better in general" plus a set of specific features. Kept here as a dated addendum rather than rewritten into §6–9, so those sections stay an accurate record of what v1 actually was.
+
+| Addition | What it does | Notes |
+|---|---|---|
+| **Dark mode** | Follows the OS/browser color-scheme preference automatically | No in-app toggle — every color was already a CSS variable, so this is a `prefers-color-scheme: dark` override block |
+| **Per-tracker color** | A small colored dot next to a tracker's name, everywhere it appears | Auto-assigned from a fixed palette in creation order; existing trackers from before this feature get one deterministically backfilled on next load (§5's `color` field) |
+| **Unit emoji** | ⏱️/✅/💰 shown next to unit labels and in tracker pickers | Pure presentation, lives in `format.js` alongside `amount()` |
+| **Repeat last entry** | One-tap button on Today that re-logs your most recent entry (among active trackers) with today's date | Extends F5's "quick log" idea beyond count-unit trackers |
+| **CSV export** | A second export option alongside the JSON backup, for opening in a spreadsheet | One-way — only the JSON backup round-trips through Import |
+| **Year / All-time summary** | Two more modes alongside F8/F9's Week/Month | "All time" has no prev/next — there's only one such period |
+| General visual polish | Hover states, transitions, and consistent focus outlines across buttons/cards/rows | No new concepts, just consistency |
+
+None of this changes v1's success criteria in §12 — it's additive polish and small features on top of a spec that was already complete and in daily use.

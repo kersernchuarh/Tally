@@ -83,6 +83,16 @@ window.App = window.App || {};
     return d.getFullYear() + '-' + pad2(d.getMonth() + 1);
   }
 
+  /** "2026-07-26" -> "2026". Same string-slicing trick as monthKey(). */
+  function yearKey(dateStr) {
+    return dateStr.slice(0, 4);
+  }
+
+  /** yearKey shifted by n years (n may be negative), as a string. */
+  function shiftYear(key, n) {
+    return String(Number(key) + n);
+  }
+
   App.dates = {
     todayString: todayString,
     addDays: addDays,
@@ -90,6 +100,8 @@ window.App = window.App || {};
     weekLabel: weekLabel,
     monthKey: monthKey,
     monthLabel: monthLabel,
-    shiftMonth: shiftMonth
+    shiftMonth: shiftMonth,
+    yearKey: yearKey,
+    shiftYear: shiftYear
   };
 })();

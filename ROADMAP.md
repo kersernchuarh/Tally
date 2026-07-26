@@ -116,6 +116,14 @@ Order matters and isn't arbitrary. Storage comes before screens because screens 
 
 ---
 
+## Design & feature pass — 2026-07-27
+
+Not a numbered roadmap phase — an ad hoc round of "make the design better, add features" done right after v1 shipped, while daily use was still ongoing. See PRD §13 for the full list: dark mode, per-tracker color, unit emoji, "repeat last entry," CSV export, and Year/All-time in Summary, plus general hover/transition/focus polish across buttons, cards, and rows.
+
+**Commit:** `Design pass: dark mode, tracker colors, repeat-last, CSV export, year/all-time summary`
+
+---
+
 ## Phase 5 — Stretch *(optional, pick by desire)*
 
 Each is independent. Do one, all, or none.

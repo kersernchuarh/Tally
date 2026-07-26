@@ -32,6 +32,35 @@
   --space-6: 32px;
 
   --font: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  --transition-fast: 0.15s ease;
+}
+
+/* ---- Dark mode ------------------------------------------------------------
+   Follows the OS/browser preference automatically — no in-app toggle.
+   Because every color in this file is one of the variables above, dark
+   mode is mostly just re-pointing those variables. The one exception:
+   --color-primary has to get LIGHTER in dark mode to stay readable as
+   text on a dark surface, which then makes it too light for white text
+   to sit on top of as a solid button — so .btn--primary's text color
+   needs its own small dark-mode fix-up, deliberately placed near the
+   end of this file (after .btn--primary's base rule) so it wins the
+   cascade; a copy placed up here would lose to that later same-
+   specificity rule regardless of the media query. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg:        #15171c;
+    --color-surface:   #1e2128;
+    --color-border:    #2f333d;
+    --color-text:      #e7e9ec;
+    --color-text-dim:  #9199a6;
+    --color-primary:   #6b8afd;
+    --color-primary-dim: #232a45;
+    --color-danger:    #f0605f;
+    --color-danger-dim: #3a2225;
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
 }
 
 /* ---- Reset --------------------------------------------------------------
@@ -50,12 +79,14 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
 /* ---- Header -------------------------------------------------------------- */
 .header {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .header__inner {
@@ -173,6 +204,7 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: var(--space-4);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
 }
 
 .btn {
@@ -185,11 +217,21 @@ body {
   font-weight: 600;
   font-size: 0.9375rem;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    filter var(--transition-fast), transform var(--transition-fast);
 }
 
 .btn:hover {
   border-color: var(--color-primary);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
 }
 
 .btn--primary {
@@ -198,8 +240,10 @@ body {
   color: #fff;
 }
 
+/* Re-pointed near the bottom of this file for dark mode — see the note
+   by the dark-mode block up top for why. */
 .btn--primary:hover {
-  background: #2941ac;
+  filter: brightness(0.9);
 }
 
 .btn--danger {
@@ -210,6 +254,7 @@ body {
 
 .btn--danger:hover {
   border-color: var(--color-danger);
+  filter: brightness(0.97);
 }
 
 .field {
@@ -233,12 +278,26 @@ body {
   border-radius: var(--radius);
   background: var(--color-surface);
   color: var(--color-text);
+  transition: border-color var(--transition-fast);
 }
 
 .field input:focus,
 .field select:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
+}
+
+/** A small colored circle marking which tracker something belongs to —
+ *  the color comes from the tracker's own `color` field (store.js),
+ *  set inline per-row since it's per-item data, not a fixed style. */
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 /* ---- Trackers view (Phase 1) --------------------------------------------- */
@@ -275,6 +334,12 @@ body {
   justify-content: space-between;
   gap: var(--space-3);
   flex-wrap: wrap;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tracker-row:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow);
 }
 
 .tracker-row--archived {
@@ -370,6 +435,20 @@ body {
   width: 100%;
 }
 
+.repeat-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: var(--space-5);
+  background: var(--color-primary-dim);
+  border-color: var(--color-primary-dim);
+  color: var(--color-primary);
+  text-align: left;
+}
+
+.repeat-btn:hover {
+  border-color: var(--color-primary);
+}
+
 .summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -385,6 +464,11 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.summary-card:hover {
+  box-shadow: var(--shadow);
 }
 
 .summary-card__info {
@@ -428,6 +512,11 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+  transition: box-shadow var(--transition-fast);
+}
+
+.entry-row:hover {
+  box-shadow: var(--shadow);
 }
 
 .entry-row__info {
@@ -487,6 +576,7 @@ body {
 .mode-toggle {
   display: flex;
   gap: var(--space-2);
+  flex-wrap: wrap;
   margin-bottom: var(--space-4);
 }
 
@@ -500,6 +590,11 @@ body {
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+}
+
+.mode-btn:hover {
+  border-color: var(--color-primary);
 }
 
 .mode-btn.is-active {
@@ -514,6 +609,10 @@ body {
   justify-content: space-between;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
+}
+
+.period-nav--static {
+  justify-content: center;
 }
 
 .period-nav__label {
@@ -540,6 +639,11 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+  transition: box-shadow var(--transition-fast);
+}
+
+.summary-list__row:hover {
+  box-shadow: var(--shadow);
 }
 
 .summary-list__name {
@@ -565,4 +669,19 @@ body {
 @media (max-width: 480px) {
   .tabs { gap: 0; }
   .tab { flex: 1; text-align: center; padding: var(--space-3) var(--space-1); }
+  .mode-toggle { gap: var(--space-1); }
+  .mode-btn { padding: var(--space-1) var(--space-3); font-size: 0.8125rem; }
+}
+
+/* ---- Dark-mode text-color fix-up -----------------------------------------
+   --color-primary is lightened for dark mode (see the top of this file) so
+   it stays readable as plain text/borders on a dark surface — but that
+   makes it too light for WHITE text to sit on top of as a solid button.
+   Placed last on purpose: same specificity as the base rules above, so
+   source order is what makes this win, regardless of the media query. */
+@media (prefers-color-scheme: dark) {
+  .btn--primary,
+  .mode-btn.is-active {
+    color: #14171c;
+  }
 }

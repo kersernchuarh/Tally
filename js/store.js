@@ -10,7 +10,8 @@
      { version: 1, trackers: [...], entries: [...] }
 
    Phase 1 built trackers; Phase 2 added entries; Phase 3 read-only via
-   dates.js; Phase 4 adds editing an entry and JSON import/export.
+   dates.js; Phase 4 added editing an entry and JSON import/export; the
+   2026-07-27 design pass added a per-tracker accent `color`.
    ========================================================================= */
 
 window.App = window.App || {};
@@ -19,15 +20,33 @@ window.App = window.App || {};
   var STORAGE_KEY = 'tally.v1';
   var VALID_UNITS = ['minutes', 'count', 'dollars'];
 
-  function defaultData() {
-    return { version: 1, trackers: [], entries: [] };
-  }
+  // Categorical accent colors, cycled through in creation order so each
+  // tracker gets a distinct-ish color for free — purely decorative (used
+  // as a small dot next to the tracker's name), never as text-on-color,
+  // so contrast isn't a concern.
+  var COLOR_PALETTE = [
+    '#e53e3e', '#dd6b20', '#d69e2e', '#38a169',
+    '#319795', '#3182ce', '#5a67d8', '#805ad5', '#d53f8c'
+  ];
 
   function isNonEmptyString(v) {
     return typeof v === 'string' && v.trim().length > 0;
   }
 
-  function sanitizeTracker(t) {
+  function isHexColor(v) {
+    return typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
+  }
+
+  function defaultData() {
+    return { version: 1, trackers: [], entries: [] };
+  }
+
+  /**
+   * index is this tracker's position in the trackers array, used only as
+   * a fallback so trackers saved before the color field existed get one
+   * deterministically assigned on next load, instead of losing history.
+   */
+  function sanitizeTracker(t, index) {
     if (!t || typeof t !== 'object') return null;
     if (!isNonEmptyString(t.id) || !isNonEmptyString(t.name)) return null;
 
@@ -35,6 +54,7 @@ window.App = window.App || {};
       id: t.id,
       name: t.name,
       unit: VALID_UNITS.indexOf(t.unit) !== -1 ? t.unit : 'count',
+      color: isHexColor(t.color) ? t.color : COLOR_PALETTE[index % COLOR_PALETTE.length],
       archived: !!t.archived,
       createdAt: isNonEmptyString(t.createdAt) ? t.createdAt : new Date().toISOString()
     };
@@ -68,7 +88,7 @@ window.App = window.App || {};
     if (!raw || typeof raw !== 'object') return defaultData();
 
     var trackers = Array.isArray(raw.trackers)
-      ? raw.trackers.map(sanitizeTracker).filter(Boolean)
+      ? raw.trackers.map(function (t, i) { return sanitizeTracker(t, i); }).filter(Boolean)
       : [];
 
     var entries = Array.isArray(raw.entries)
@@ -128,6 +148,7 @@ window.App = window.App || {};
       id: generateId('t'),
       name: name,
       unit: unit,
+      color: COLOR_PALETTE[data.trackers.length % COLOR_PALETTE.length],
       archived: false,
       createdAt: new Date().toISOString()
     };

@@ -19,6 +19,7 @@ Read this at the start of any session on this project, alongside [PRD.md](PRD.md
 - **No ES modules.** Browsers block `import`/`export` on `file://` URLs. Use classic `<script>` tags in the fixed load order below — never change this order without updating `index.html`'s script list to match.
 - **`localStorage` is the only persistence**, under the key `tally.v1`, shaped exactly as in PRD.md §5. **Only `js/store.js` may reference `localStorage`.** Every other file goes through `App.store`.
 - **Dates are stored as plain `"YYYY-MM-DD"` strings**, never JS `Date` objects, to avoid timezone bugs. See PRD.md §5 for why.
+- **No in-app dark-mode toggle.** Dark mode (added 2026-07-27) follows `prefers-color-scheme` only, via CSS variables in `styles.css`. Don't add a manual switch unless asked.
 
 ## File map (see STRUCTURE.md for full reasoning)
 
@@ -45,9 +46,10 @@ Everything attaches to one global `App` namespace (`App.store`, `App.dates`, `Ap
 - [x] Phase 2 — logging + Today view
 - [x] Phase 3 — weekly/monthly summary
 - [x] Phase 4 — export/import + polish
+- [x] Design & feature pass (2026-07-27) — dark mode, tracker colors, repeat-last, CSV export, year/all-time summary; see PRD.md §13
 
 Update this checklist as phases complete.
 
 ## How to run it
 
-Double-click `index.html`, or open it from a browser's File > Open. No server, no build, no install. `F12` opens DevTools for console errors and to inspect `localStorage` under Application → Local Storage.
+Right-click `index.html` → **Open with** → Edge (or Chrome), then use it there. **Double-clicking does not open a browser on this machine** — `.html` isn't associated with one, so double-click opens something else that silently fails to run any CSS/JS. No server, no build, no install either way. `F12` opens DevTools for console errors and to inspect `localStorage` under Application → Local Storage.

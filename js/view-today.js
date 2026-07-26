@@ -12,6 +12,10 @@
    view-trackers.js. Editing an entry follows the same inline-form
    pattern as renaming a tracker: click Edit, the row becomes a form,
    Escape or Cancel backs out without saving.
+
+   2026-07-27 design pass added: a "Repeat last entry" quick action, and
+   a colored dot per tracker (App.store's tracker.color) for at-a-glance
+   recognition across summary cards and entry rows.
    ========================================================================= */
 
 window.App = window.App || {};
@@ -39,8 +43,19 @@ App.views = App.views || {};
 
   function trackerOptionsHtml(trackers) {
     return trackers.map(function (t) {
-      return '<option value="' + t.id + '">' + escapeHtml(t.name) + '</option>';
+      return '<option value="' + t.id + '">' + App.format.unitEmoji(t.unit) + ' ' + escapeHtml(t.name) + '</option>';
     }).join('');
+  }
+
+  /** Most recent entry among currently-active trackers, or null. Powers
+   *  the "Repeat last entry" quick action. */
+  function lastActiveEntry(data, activeTrackers) {
+    var activeIds = activeTrackers.map(function (t) { return t.id; });
+    var candidates = data.entries.filter(function (e) { return activeIds.indexOf(e.trackerId) !== -1; });
+    if (candidates.length === 0) return null;
+    return candidates.reduce(function (latest, e) {
+      return e.createdAt > latest.createdAt ? e : latest;
+    });
   }
 
   function logFormHtml(activeTrackers, today) {
@@ -78,7 +93,10 @@ App.views = App.views || {};
     return (
       '<div class="summary-card">' +
         '<div class="summary-card__info">' +
-          '<span class="summary-card__name">' + escapeHtml(tracker.name) + '</span>' +
+          '<span class="summary-card__name">' +
+            '<span class="dot" style="background:' + tracker.color + '"></span>' +
+            escapeHtml(tracker.name) +
+          '</span>' +
           '<span class="summary-card__total">' + display + '</span>' +
         '</div>' +
         quickLog +
@@ -105,10 +123,12 @@ App.views = App.views || {};
 
     var display = tracker ? App.format.amount(entry.amount, tracker.unit) : entry.amount;
 
+    var dot = tracker ? '<span class="dot" style="background:' + tracker.color + '"></span>' : '';
+
     return (
       '<li class="entry-row" data-id="' + entry.id + '">' +
         '<div class="entry-row__info">' +
-          '<span class="entry-row__tracker">' + escapeHtml(name) + '</span>' +
+          '<span class="entry-row__tracker">' + dot + escapeHtml(name) + '</span>' +
           '<span class="entry-row__amount">' + display + '</span>' +
           (entry.note ? '<span class="entry-row__note">' + escapeHtml(entry.note) + '</span>' : '') +
         '</div>' +
@@ -149,6 +169,14 @@ App.views = App.views || {};
     }
 
     html += logFormHtml(activeTrackers, today);
+
+    var lastEntry = lastActiveEntry(data, activeTrackers);
+    if (lastEntry) {
+      var lastTracker = data.trackers.filter(function (t) { return t.id === lastEntry.trackerId; })[0];
+      html += '<button type="button" class="btn repeat-btn" data-action="repeat-last">' +
+        '↻ Repeat: ' + escapeHtml(lastTracker.name) + ' (' + App.format.amount(lastEntry.amount, lastTracker.unit) + ')' +
+      '</button>';
+    }
 
     html += '<div class="summary-cards">' +
       activeTrackers.map(function (t) { return summaryCardHtml(t, todaysEntries); }).join('') +
@@ -225,6 +253,22 @@ App.views = App.views || {};
     if (action === 'quick-log') {
       try {
         App.store.addEntry(button.dataset.id, 1, App.dates.todayString(), '');
+      } catch (err) {
+        alert(err.message);
+        return;
+      }
+      render();
+      return;
+    }
+
+    if (action === 'repeat-last') {
+      var data = App.store.load();
+      var activeTrackers = data.trackers.filter(function (t) { return !t.archived; });
+      var lastEntry = lastActiveEntry(data, activeTrackers);
+      if (!lastEntry) return;
+
+      try {
+        App.store.addEntry(lastEntry.trackerId, lastEntry.amount, App.dates.todayString(), lastEntry.note);
       } catch (err) {
         alert(err.message);
         return;

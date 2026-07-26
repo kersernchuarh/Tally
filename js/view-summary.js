@@ -1,8 +1,10 @@
 /* =========================================================================
    view-summary.js — renders the Summary tab
 
-   Week/Month toggle, per-tracker totals for the selected period, and
-   prev/next navigation between periods (F8, F9 in PRD.md §6).
+   Week/Month/Year/All-time toggle, per-tracker totals for the selected
+   period, and prev/next navigation between periods (F8, F9 in PRD.md §6,
+   with Year/All added in the 2026-07-27 design pass). "All time" has no
+   navigation — there's only one such period.
 
    Totals include every tracker with at least one entry in the period —
    including archived ones — so a past week's history stays accurate even
@@ -20,10 +22,12 @@ App.views = App.views || {};
   var mode = 'week';
   var weekAnchor = null;
   var monthAnchor = null;
+  var yearAnchor = null;
 
   function ensureAnchors() {
     if (!weekAnchor) weekAnchor = App.dates.todayString();
     if (!monthAnchor) monthAnchor = App.dates.monthKey(App.dates.todayString());
+    if (!yearAnchor) yearAnchor = App.dates.yearKey(App.dates.todayString());
   }
 
   function escapeHtml(str) {
@@ -42,6 +46,10 @@ App.views = App.views || {};
     return entries.filter(function (e) { return App.dates.monthKey(e.date) === key; });
   }
 
+  function entriesInYear(entries, key) {
+    return entries.filter(function (e) { return App.dates.yearKey(e.date) === key; });
+  }
+
   function totalsByTracker(entries) {
     var totals = {};
     entries.forEach(function (e) {
@@ -56,6 +64,7 @@ App.views = App.views || {};
       return {
         name: tracker ? tracker.name : '(deleted tracker)',
         unit: tracker ? tracker.unit : 'count',
+        color: tracker ? tracker.color : '#a0aec0',
         total: totals[id]
       };
     });
@@ -69,7 +78,10 @@ App.views = App.views || {};
     return '<ul class="summary-list">' + rows.map(function (r) {
       return (
         '<li class="summary-list__row">' +
-          '<span class="summary-list__name">' + escapeHtml(r.name) + '</span>' +
+          '<span class="summary-list__name">' +
+            '<span class="dot" style="background:' + r.color + '"></span>' +
+            escapeHtml(r.name) +
+          '</span>' +
           '<span class="summary-list__total">' + App.format.amount(r.total, r.unit) + '</span>' +
         '</li>'
       );
@@ -85,12 +97,17 @@ App.views = App.views || {};
 
     var html = '<h2 class="view-title">Summary</h2>';
 
-    html += '<div class="mode-toggle">' +
-      '<button type="button" class="mode-btn' + (mode === 'week' ? ' is-active' : '') +
-        '" data-action="set-mode" data-mode="week">Week</button>' +
-      '<button type="button" class="mode-btn' + (mode === 'month' ? ' is-active' : '') +
-        '" data-action="set-mode" data-mode="month">Month</button>' +
-    '</div>';
+    var modes = [
+      { key: 'week', label: 'Week' },
+      { key: 'month', label: 'Month' },
+      { key: 'year', label: 'Year' },
+      { key: 'all', label: 'All time' }
+    ];
+
+    html += '<div class="mode-toggle">' + modes.map(function (m) {
+      return '<button type="button" class="mode-btn' + (mode === m.key ? ' is-active' : '') +
+        '" data-action="set-mode" data-mode="' + m.key + '">' + m.label + '</button>';
+    }).join('') + '</div>';
 
     var label, body;
 
@@ -98,16 +115,26 @@ App.views = App.views || {};
       var range = App.dates.weekRange(weekAnchor);
       label = App.dates.weekLabel(range);
       body = rowsHtml(totalsByTracker(entriesInWeek(data.entries, range)), data.trackers);
-    } else {
+    } else if (mode === 'month') {
       label = App.dates.monthLabel(monthAnchor);
       body = rowsHtml(totalsByTracker(entriesInMonth(data.entries, monthAnchor)), data.trackers);
+    } else if (mode === 'year') {
+      label = yearAnchor;
+      body = rowsHtml(totalsByTracker(entriesInYear(data.entries, yearAnchor)), data.trackers);
+    } else {
+      label = 'All time';
+      body = rowsHtml(totalsByTracker(data.entries), data.trackers);
     }
 
-    html += '<div class="period-nav">' +
-      '<button type="button" class="btn" data-action="prev" aria-label="Previous period">&larr;</button>' +
-      '<span class="period-nav__label">' + label + '</span>' +
-      '<button type="button" class="btn" data-action="next" aria-label="Next period">&rarr;</button>' +
-    '</div>';
+    if (mode === 'all') {
+      html += '<div class="period-nav period-nav--static"><span class="period-nav__label">' + label + '</span></div>';
+    } else {
+      html += '<div class="period-nav">' +
+        '<button type="button" class="btn" data-action="prev" aria-label="Previous period">&larr;</button>' +
+        '<span class="period-nav__label">' + label + '</span>' +
+        '<button type="button" class="btn" data-action="next" aria-label="Next period">&rarr;</button>' +
+      '</div>';
+    }
 
     html += body;
 
@@ -130,8 +157,10 @@ App.views = App.views || {};
       var delta = action === 'prev' ? -1 : 1;
       if (mode === 'week') {
         weekAnchor = App.dates.addDays(weekAnchor, delta * 7);
-      } else {
+      } else if (mode === 'month') {
         monthAnchor = App.dates.shiftMonth(monthAnchor, delta);
+      } else if (mode === 'year') {
+        yearAnchor = App.dates.shiftYear(yearAnchor, delta);
       }
       render();
     }
