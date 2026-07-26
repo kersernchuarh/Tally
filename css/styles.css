@@ -1,0 +1,258 @@
+/* =========================================================================
+   Tally — styles
+
+   Organised top to bottom: variables, reset, layout, header, tabs, views,
+   shared components, footer. Nothing in here is tied to a specific screen's
+   *content* — that's what js/view-*.js decide. This file only decides how
+   things look.
+   ========================================================================= */
+
+/* ---- Design tokens ------------------------------------------------------
+   One place to change a colour or spacing value across the whole app.
+   Change a number here instead of hunting through every rule below. ------ */
+:root {
+  --color-bg:        #f5f6f8;
+  --color-surface:   #ffffff;
+  --color-border:    #e2e5ea;
+  --color-text:      #1c1f26;
+  --color-text-dim:  #6b7280;
+  --color-primary:   #3454d1;
+  --color-primary-dim: #eef0fd;
+  --color-danger:    #c53030;
+  --color-danger-dim: #fbeaea;
+
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --font: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ---- Reset --------------------------------------------------------------
+   Browsers ship inconsistent default spacing/sizing. Zero it out once so
+   every measurement from here on is one we chose deliberately. ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+h1, h2, h3, p { margin: 0; }
+button { font: inherit; }
+
+body {
+  font-family: var(--font);
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.45;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Header -------------------------------------------------------------- */
+.header {
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.header__inner {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.header__title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.header__date {
+  font-size: 0.875rem;
+  color: var(--color-text-dim);
+}
+
+/* ---- Tabs ----------------------------------------------------------------
+   .is-active is toggled by app.js. Everything about *how* an active tab
+   looks lives here; app.js only decides *which* one currently has it. ---- */
+.tabs {
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tab {
+  appearance: none;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: var(--space-3) var(--space-2);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--color-text);
+}
+
+.tab.is-active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* ---- Main / views ----------------------------------------------------------
+   All three .view sections exist in the DOM at once; only .is-active is
+   shown. This is the entire mechanism behind tab switching. ------------- */
+.main {
+  flex: 1;
+  max-width: 640px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--space-5) var(--space-4);
+}
+
+.view {
+  display: none;
+}
+
+.view.is-active {
+  display: block;
+}
+
+/* ---- Placeholder (Phase 0 only — removed as each screen gets built) --- */
+.placeholder {
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-6) var(--space-5);
+  text-align: center;
+}
+
+.placeholder__label {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.placeholder__text {
+  color: var(--color-text-dim);
+  max-width: 32ch;
+  margin: 0 auto var(--space-4);
+}
+
+.placeholder__phase {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  background: var(--color-primary-dim);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 999px;
+}
+
+/* ---- Shared components ---------------------------------------------------
+   Not all used yet in Phase 0, but defined once here so every later phase
+   (cards, buttons, forms) reuses the same look instead of reinventing it. */
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: var(--space-4);
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-4);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover {
+  border-color: var(--color-primary);
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.btn--primary:hover {
+  background: #2941ac;
+}
+
+.btn--danger {
+  color: var(--color-danger);
+  border-color: var(--color-danger-dim);
+  background: var(--color-danger-dim);
+}
+
+.btn--danger:hover {
+  border-color: var(--color-danger);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-bottom: var(--space-3);
+}
+
+.field label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-dim);
+}
+
+.field input,
+.field select {
+  font: inherit;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* ---- Footer ------------------------------------------------------------- */
+.footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  padding: var(--space-4);
+}
+
+/* ---- Small screens -------------------------------------------------------
+   Not required for v1 (laptop-only per PRD) but nearly free to include now,
+   and it's what makes the app usable if you ever do open it on a phone. */
+@media (max-width: 480px) {
+  .tabs { gap: 0; }
+  .tab { flex: 1; text-align: center; padding: var(--space-3) var(--space-1); }
+}
