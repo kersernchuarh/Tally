@@ -93,6 +93,13 @@ window.App = window.App || {};
     return String(Number(key) + n);
   }
 
+  /** Number of days in a "YYYY-MM" month — day 0 of the next month is
+   *  the last day of this one. Powers the "logged on X of Y days" stat. */
+  function daysInMonth(key) {
+    var parts = key.split('-');
+    return new Date(Number(parts[0]), Number(parts[1]), 0).getDate();
+  }
+
   App.dates = {
     todayString: todayString,
     addDays: addDays,
@@ -102,6 +109,7 @@ window.App = window.App || {};
     monthLabel: monthLabel,
     shiftMonth: shiftMonth,
     yearKey: yearKey,
-    shiftYear: shiftYear
+    shiftYear: shiftYear,
+    daysInMonth: daysInMonth
   };
 })();

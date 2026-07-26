@@ -1,16 +1,16 @@
 # Tally
 
-A personal tracker that runs entirely in your browser — no install, no account, no internet required. Define your own trackers (study time, habits, spending — anything measured in minutes, counts, or dollars), log entries, and see today's activity plus weekly/monthly totals.
+A personal tracker that runs entirely in your browser — no accounts, no server, works offline. Define your own trackers (study time, habits, spending — anything measured in minutes, counts, or dollars), log entries, and see today's activity plus weekly/monthly/yearly totals, insights, and a searchable history.
 
-## How to open it
+**Live:** https://kersernchuarh.github.io/Tally/ — open it from any device's browser, no install needed.
 
-Double-click **`index.html`**. That's the whole setup.
+## Running it locally
 
-(Or: right-click it → Open with → your browser of choice.)
+Right-click **`index.html`** → **Open with** → Edge (or Chrome). Double-clicking may not work depending on your machine's default app for `.html` files.
 
 ## Your data
 
-Everything you enter is saved in your browser's local storage, tied to this file's location on your computer. It stays there across restarts, but it **only lives in this one browser on this one machine** — and it can be wiped if you ever clear that browser's site data. An export/import backup feature is planned for Phase 4; until then, treat the data as not-yet-durable.
+Data is saved in the browser's local storage, separately for every device/browser that opens the app — it does **not** sync between the local copy, the hosted link, your phone, etc. Use the **Export backup (JSON)** / **Import backup** buttons on the Trackers tab to move your history between them, and export regularly as a safety backup — local storage can be wiped by clearing browser data.
 
 ## Project docs
 
@@ -21,4 +21,4 @@ Everything you enter is saved in your browser's local storage, tied to this file
 
 ## Status
 
-Phase 0 of 4 — skeleton and navigation only. See CLAUDE.md for the current checklist.
+v1 complete (Phases 0–4), plus a post-v1 design and features pass. See [CLAUDE.md](CLAUDE.md) for the current checklist and [PRD.md §13](PRD.md) for what was added after v1.

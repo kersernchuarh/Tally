@@ -47,9 +47,17 @@ Everything attaches to one global `App` namespace (`App.store`, `App.dates`, `Ap
 - [x] Phase 3 — weekly/monthly summary
 - [x] Phase 4 — export/import + polish
 - [x] Design & feature pass (2026-07-27) — dark mode, tracker colors, repeat-last, CSV export, year/all-time summary; see PRD.md §13
+- [x] Hosted on GitHub Pages (2026-07-27) — live at https://kersernchuarh.github.io/Tally/
+- [x] Insights + Browse entries search/filter in Summary (2026-07-27); see PRD.md §13
 
 Update this checklist as phases complete.
 
+## Hosting
+
+Live at **https://kersernchuarh.github.io/Tally/** via GitHub Pages, deployed from the `main` branch's root. Remote: `https://github.com/kersernchuarh/Tally.git`. To publish a change: commit, then `git push`. GitHub Pages rebuilds automatically in a minute or two — no other deploy step. No code changes are needed to support both `file://` and hosted `https://` — classic `<script>` tags work the same in both.
+
 ## How to run it
 
-Right-click `index.html` → **Open with** → Edge (or Chrome), then use it there. **Double-clicking does not open a browser on this machine** — `.html` isn't associated with one, so double-click opens something else that silently fails to run any CSS/JS. No server, no build, no install either way. `F12` opens DevTools for console errors and to inspect `localStorage` under Application → Local Storage.
+**Live:** just open https://kersernchuarh.github.io/Tally/ in any browser, any device.
+
+**Locally:** right-click `index.html` → **Open with** → Edge (or Chrome), then use it there. **Double-clicking does not open a browser on this machine** — `.html` isn't associated with one, so double-click opens something else that silently fails to run any CSS/JS. No server, no build, no install either way. `F12` opens DevTools for console errors and to inspect `localStorage` under Application → Local Storage.

@@ -165,5 +165,8 @@ A design-and-features pass done after v1 shipped, requested as "make the design 
 | **CSV export** | A second export option alongside the JSON backup, for opening in a spreadsheet | One-way — only the JSON backup round-trips through Import |
 | **Year / All-time summary** | Two more modes alongside F8/F9's Week/Month | "All time" has no prev/next — there's only one such period |
 | General visual polish | Hover states, transitions, and consistent focus outlines across buttons/cards/rows | No new concepts, just consistency |
+| **Hosted on GitHub Pages** | Live at https://kersernchuarh.github.io/Tally/, usable from any device's browser | Static files only, still no server/backend. Each device's local storage is still separate and unsynced — Export/Import is still how data moves between them (§7, §8) |
+| **Insights on Summary** | "Logged on X of Y days · Z entries" per period, and each tracker's total vs the previous equivalent period (▲/▼) | Skipped for "All time" (no previous period to compare against) and for a tracker with no prior-period data (shown as "new" rather than a misleading percentage) |
+| **Browse entries (search/filter)** | A search box (matches note text or tracker name) and a tracker dropdown, scoped to the Summary tab's current period, with delete | First screen that lets you find and remove a *past* entry — previously only today's entries were editable/deletable |
 
 None of this changes v1's success criteria in §12 — it's additive polish and small features on top of a spec that was already complete and in daily use.

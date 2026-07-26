@@ -122,6 +122,12 @@ Not a numbered roadmap phase — an ad hoc round of "make the design better, add
 
 **Commit:** `Design pass: dark mode, tracker colors, repeat-last, CSV export, year/all-time summary`
 
+## Hosting + Insights & Search — 2026-07-27
+
+Also done the same day: the project was pushed to GitHub and hosted live via GitHub Pages at https://kersernchuarh.github.io/Tally/, then two more features were added to Summary — an insights line (days logged, entry count, period-over-period delta per tracker) and a "Browse entries" search/filter with delete, scoped to whatever period Summary is currently showing. See PRD §13.
+
+**Commit:** `Add insights and searchable entry browser to Summary`
+
 ---
 
 ## Phase 5 — Stretch *(optional, pick by desire)*
