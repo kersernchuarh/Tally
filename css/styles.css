@@ -9,20 +9,30 @@
 
 /* ---- Design tokens ------------------------------------------------------
    One place to change a colour or spacing value across the whole app.
-   Change a number here instead of hunting through every rule below. ------ */
-:root {
-  --color-bg:        #f5f6f8;
-  --color-surface:   #ffffff;
-  --color-border:    #e2e5ea;
-  --color-text:      #1c1f26;
-  --color-text-dim:  #6b7280;
-  --color-primary:   #3454d1;
-  --color-primary-dim: #eef0fd;
-  --color-danger:    #c53030;
-  --color-danger-dim: #fbeaea;
+   Change a number here instead of hunting through every rule below.
 
-  --radius: 10px;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+   Palette: indigo (primary) + pink (accent, used sparingly for the logo
+   mark and gradient flourishes) on a soft lavender-tinted neutral scale,
+   instead of generic blue-gray — the "make it look more designed, not
+   just accented" pass from 2026-07-27. ------------------------------- */
+:root {
+  --color-bg-start:  #f6f4ff;
+  --color-bg-end:    #eef4ff;
+  --color-surface:   #ffffff;
+  --color-border:    #e6e2f5;
+  --color-text:      #1e1b2e;
+  --color-text-dim:  #6b6785;
+  --color-primary:       #6366f1;
+  --color-primary-strong: #4f46e5;
+  --color-primary-dim:   #eeeefd;
+  --color-accent:    #ec4899;
+  --color-danger:    #e11d48;
+  --color-danger-dim: #fdeaef;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --shadow: 0 1px 2px rgba(30, 27, 46, 0.04), 0 6px 20px rgba(99, 102, 241, 0.08);
+  --shadow-lg: 0 4px 10px rgba(30, 27, 46, 0.06), 0 14px 32px rgba(99, 102, 241, 0.14);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -49,17 +59,21 @@
    specificity rule regardless of the media query. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-bg:        #15171c;
-    --color-surface:   #1e2128;
-    --color-border:    #2f333d;
-    --color-text:      #e7e9ec;
-    --color-text-dim:  #9199a6;
-    --color-primary:   #6b8afd;
-    --color-primary-dim: #232a45;
-    --color-danger:    #f0605f;
-    --color-danger-dim: #3a2225;
+    --color-bg-start:  #14121f;
+    --color-bg-end:    #1a1628;
+    --color-surface:   #1e1b2e;
+    --color-border:    #322c4a;
+    --color-text:      #ede9fe;
+    --color-text-dim:  #a29dc2;
+    --color-primary:       #8183f4;
+    --color-primary-strong: #6366f1;
+    --color-primary-dim:   #28243f;
+    --color-accent:    #f9a8d4;
+    --color-danger:    #fb7185;
+    --color-danger-dim: #3a1e28;
 
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.3);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4), 0 16px 36px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -73,20 +87,23 @@ button { font: inherit; }
 
 body {
   font-family: var(--font);
-  background: var(--color-bg);
+  background: linear-gradient(160deg, var(--color-bg-start) 0%, var(--color-bg-end) 100%);
+  background-attachment: fixed;
   color: var(--color-text);
   line-height: 1.45;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  transition: background-color var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 /* ---- Header -------------------------------------------------------------- */
 .header {
   background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+  box-shadow: 0 1px 0 var(--color-border), 0 6px 20px rgba(99, 102, 241, 0.06);
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+  position: relative;
+  z-index: 1;
 }
 
 .header__inner {
@@ -94,14 +111,42 @@ body {
   margin: 0 auto;
   padding: var(--space-4) var(--space-4) var(--space-3);
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
 }
 
+.header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* A small "app icon" monogram — a gradient rounded square instead of an
+ * image asset, so it needs no files and matches the palette exactly. */
+.logo-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.0625rem;
+  box-shadow: var(--shadow);
+  flex-shrink: 0;
+}
+
 .header__title {
-  font-size: 1.375rem;
-  font-weight: 700;
+  font-size: 1.4375rem;
+  font-weight: 800;
   letter-spacing: -0.01em;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: var(--color-primary); /* fallback if background-clip: text isn't supported */
+  -webkit-text-fill-color: transparent;
 }
 
 .header__date {
@@ -111,16 +156,20 @@ body {
 
 /* ---- Tabs ----------------------------------------------------------------
    .is-active is toggled by app.js. Everything about *how* an active tab
-   looks lives here; app.js only decides *which* one currently has it. ---- */
+   looks lives here; app.js only decides *which* one currently has it.
+
+   Styled as a segmented control (rounded track, sliding "pill" highlight
+   behind the active tab) rather than an underline — reads as a deliberate
+   app-shell control instead of a browser-tab afterthought. -------------- */
 .tabs {
   max-width: 640px;
-  margin: 0 auto;
-  width: 100%;
+  margin: var(--space-3) auto 0;
+  width: calc(100% - var(--space-6));
   display: flex;
-  gap: var(--space-2);
-  padding: 0 var(--space-4);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  gap: 2px;
+  padding: 4px;
+  background: var(--color-primary-dim);
+  border-radius: 999px;
 }
 
 .tab {
@@ -128,12 +177,13 @@ body {
   border: none;
   background: none;
   cursor: pointer;
-  padding: var(--space-3) var(--space-2);
+  flex: 1;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 999px;
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--color-text-dim);
-  border-bottom: 2px solid transparent;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .tab:hover {
@@ -142,7 +192,8 @@ body {
 
 .tab.is-active {
   color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
 }
 
 /* ---- Main / views ----------------------------------------------------------
@@ -164,13 +215,21 @@ body {
   display: block;
 }
 
-/* ---- Placeholder (Phase 0 only — removed as each screen gets built) --- */
+/* ---- Placeholder / empty states -------------------------------------------
+   Used both by Phase 0's original stubs and by the real "nothing here
+   yet" screens in view-trackers.js / view-today.js. */
 .placeholder {
   background: var(--color-surface);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius);
   padding: var(--space-6) var(--space-5);
   text-align: center;
+}
+
+.placeholder__icon {
+  font-size: 2.5rem;
+  line-height: 1;
+  margin-bottom: var(--space-3);
 }
 
 .placeholder__label {
@@ -223,6 +282,7 @@ body {
 
 .btn:hover {
   border-color: var(--color-primary);
+  transform: translateY(-1px);
 }
 
 .btn:active {
@@ -235,15 +295,17 @@ body {
 }
 
 .btn--primary {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
+  border-color: var(--color-primary-strong);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
 }
 
 /* Re-pointed near the bottom of this file for dark mode — see the note
    by the dark-mode block up top for why. */
 .btn--primary:hover {
-  filter: brightness(0.9);
+  filter: brightness(1.08);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
 }
 
 .btn--danger {
@@ -298,6 +360,7 @@ body {
   margin-right: 7px;
   vertical-align: middle;
   flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--color-surface);
 }
 
 /* ---- Trackers view (Phase 1) --------------------------------------------- */
@@ -334,12 +397,13 @@ body {
   justify-content: space-between;
   gap: var(--space-3);
   flex-wrap: wrap;
-  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
 .tracker-row:hover {
   border-color: var(--color-primary);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .tracker-row--archived {
@@ -464,11 +528,12 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
 .summary-card:hover {
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .summary-card__info {
@@ -512,11 +577,12 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  transition: box-shadow var(--transition-fast);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .entry-row:hover {
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .entry-row__info {
@@ -650,11 +716,12 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  transition: box-shadow var(--transition-fast);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .summary-list__row:hover {
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
 }
 
 .summary-list__name {
@@ -725,8 +792,7 @@ body {
    Not required for v1 (laptop-only per PRD) but nearly free to include now,
    and it's what makes the app usable if you ever do open it on a phone. */
 @media (max-width: 480px) {
-  .tabs { gap: 0; }
-  .tab { flex: 1; text-align: center; padding: var(--space-3) var(--space-1); }
+  .tab { text-align: center; padding: var(--space-2) var(--space-1); }
   .mode-toggle { gap: var(--space-1); }
   .mode-btn { padding: var(--space-1) var(--space-3); font-size: 0.8125rem; }
 }

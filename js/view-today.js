@@ -154,6 +154,7 @@ App.views = App.views || {};
     if (data.trackers.length === 0) {
       html +=
         '<div class="placeholder">' +
+          '<p class="placeholder__icon">✨</p>' +
           '<p class="placeholder__label">No trackers yet</p>' +
           '<p class="placeholder__text">Create a tracker first, then come back here to start logging.</p>' +
           '<button type="button" class="btn btn--primary" data-action="go-to-trackers">Create a tracker</button>' +
