@@ -1,9 +1,13 @@
 /* =========================================================================
    view-trackers.js — renders the Trackers tab
 
-   Create / rename / archive / restore / delete trackers (F1–F3, PRD.md §6),
+   Create / edit / archive / restore / delete trackers (F1–F3, PRD.md §6),
    plus a Backup card (Phase 4) to export/import the whole data file as
    JSON — the mitigation for localStorage being wipeable (PRD.md §11).
+
+   Redesign Milestone 2 added an optional daily goal to both the add and
+   edit forms — see store.js's updateTracker() (renamed from
+   renameTracker() now that this form edits more than just the name).
 
    Pattern used throughout this app: render() rebuilds the section's HTML
    entirely from App.store data every time something changes. Nothing here
@@ -52,16 +56,21 @@ App.views = App.views || {};
     if (editingId === tracker.id) {
       return (
         '<li class="tracker-row" data-id="' + tracker.id + '">' +
-          '<form class="tracker-row__rename-form" data-action="rename-submit" data-id="' + tracker.id + '">' +
-            '<input type="text" name="name" value="' + escapeHtml(tracker.name) + '" required>' +
+          '<form class="tracker-row__edit-form" data-action="edit-submit" data-id="' + tracker.id + '">' +
+            '<input type="text" name="name" value="' + escapeHtml(tracker.name) + '" required aria-label="Name">' +
+            '<input type="number" name="dailyGoal" value="' + (tracker.dailyGoal || '') + '" ' +
+              'min="0.01" step="any" placeholder="Daily goal (optional)" aria-label="Daily goal">' +
             '<button type="submit" class="btn btn--primary">Save</button>' +
-            '<button type="button" class="btn" data-action="rename-cancel">Cancel</button>' +
+            '<button type="button" class="btn" data-action="edit-cancel">Cancel</button>' +
           '</form>' +
         '</li>'
       );
     }
 
     var countLabel = entryCount + (entryCount === 1 ? ' entry' : ' entries');
+    var goalLabel = tracker.dailyGoal
+      ? ' &middot; Goal: ' + App.format.amount(tracker.dailyGoal, tracker.unit) + '/day'
+      : '';
 
     return (
       '<li class="tracker-row' + (tracker.archived ? ' tracker-row--archived' : '') + '" data-id="' + tracker.id + '">' +
@@ -70,10 +79,10 @@ App.views = App.views || {};
             '<span class="dot" style="background:' + tracker.color + '"></span>' +
             escapeHtml(tracker.name) +
           '</span>' +
-          '<span class="tracker-row__meta">' + unitLabel(tracker.unit) + ' &middot; ' + countLabel + '</span>' +
+          '<span class="tracker-row__meta">' + unitLabel(tracker.unit) + ' &middot; ' + countLabel + goalLabel + '</span>' +
         '</div>' +
         '<div class="tracker-row__actions">' +
-          '<button type="button" class="btn" data-action="rename" data-id="' + tracker.id + '">Rename</button>' +
+          '<button type="button" class="btn" data-action="edit" data-id="' + tracker.id + '">Edit</button>' +
           (tracker.archived
             ? '<button type="button" class="btn" data-action="restore" data-id="' + tracker.id + '">Restore</button>'
             : '<button type="button" class="btn" data-action="archive" data-id="' + tracker.id + '">Archive</button>') +
@@ -148,6 +157,10 @@ App.views = App.views || {};
         '<label for="new-tracker-unit">Unit</label>' +
         '<select id="new-tracker-unit" name="unit">' + unitOptionsHtml('minutes') + '</select>' +
       '</div>' +
+      '<div class="field">' +
+        '<label for="new-tracker-goal">Daily goal (optional)</label>' +
+        '<input type="number" id="new-tracker-goal" name="dailyGoal" min="0.01" step="any" placeholder="e.g. 30">' +
+      '</div>' +
       '<button type="submit" class="btn btn--primary">Add tracker</button>' +
     '</form>';
 
@@ -206,8 +219,9 @@ App.views = App.views || {};
     if (action === 'add-submit') {
       var name = form.elements.name.value.trim();
       var unit = form.elements.unit.value;
+      var newGoal = form.elements.dailyGoal.value;
       try {
-        App.store.addTracker(name, unit);
+        App.store.addTracker(name, unit, newGoal);
       } catch (err) {
         alert(err.message);
         return;
@@ -215,11 +229,12 @@ App.views = App.views || {};
       render();
     }
 
-    if (action === 'rename-submit') {
+    if (action === 'edit-submit') {
       var id = form.dataset.id;
-      var newName = form.elements.name.value.trim();
+      var editedName = form.elements.name.value.trim();
+      var editedGoal = form.elements.dailyGoal.value;
       try {
-        App.store.renameTracker(id, newName);
+        App.store.updateTracker(id, editedName, editedGoal);
       } catch (err) {
         alert(err.message);
         return;
@@ -236,13 +251,13 @@ App.views = App.views || {};
     var action = button.dataset.action;
     var id = button.dataset.id;
 
-    if (action === 'rename') {
+    if (action === 'edit') {
       editingId = id;
       render();
       return;
     }
 
-    if (action === 'rename-cancel') {
+    if (action === 'edit-cancel') {
       editingId = null;
       render();
       return;
@@ -334,7 +349,7 @@ App.views = App.views || {};
 
   function handleKeydown(e) {
     if (e.key !== 'Escape') return;
-    if (!e.target.closest('form[data-action="rename-submit"]')) return;
+    if (!e.target.closest('form[data-action="edit-submit"]')) return;
     editingId = null;
     render();
   }

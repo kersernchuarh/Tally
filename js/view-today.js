@@ -16,6 +16,12 @@
    2026-07-27 design pass added: a "Repeat last entry" quick action, and
    a colored dot per tracker (App.store's tracker.color) for at-a-glance
    recognition across summary cards and entry rows.
+
+   Redesign Milestone 2 turned this into more of a dashboard: a greeting
+   + hero ring showing how many active trackers have been logged today,
+   and a progress bar on any tracker card that has a dailyGoal set
+   (store.js) — trackers without a goal keep the plain total they always
+   had, no fabricated target.
    ========================================================================= */
 
 window.App = window.App || {};
@@ -45,6 +51,40 @@ App.views = App.views || {};
     return trackers.map(function (t) {
       return '<option value="' + t.id + '">' + App.format.unitEmoji(t.unit) + ' ' + escapeHtml(t.name) + '</option>';
     }).join('');
+  }
+
+  function greetingHtml() {
+    var hour = new Date().getHours();
+    var text = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    var emoji = hour < 12 ? '☀️' : hour < 17 ? '🌤️' : '🌙';
+    return '<p class="hero-card__greeting">' + text + ' ' + emoji + '</p>';
+  }
+
+  /** The one "at a glance" number for the whole screen: how many of
+   *  today's active trackers have at least one entry today, shown as a
+   *  filled ring (CSS conic-gradient, no SVG needed). */
+  function heroHtml(activeTrackers, todaysEntries) {
+    var loggedIds = {};
+    todaysEntries.forEach(function (e) { loggedIds[e.trackerId] = true; });
+
+    var loggedCount = activeTrackers.filter(function (t) { return loggedIds[t.id]; }).length;
+    var total = activeTrackers.length;
+    var pct = total === 0 ? 0 : Math.round((loggedCount / total) * 100);
+
+    return (
+      '<div class="hero-card">' +
+        '<div class="hero-ring" style="--pct: ' + pct + '">' +
+          '<div class="hero-ring__inner">' +
+            '<span class="hero-ring__value">' + loggedCount + '/' + total + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="hero-card__text">' +
+          greetingHtml() +
+          '<p class="hero-card__stat">' + loggedCount + ' of ' + total +
+            (total === 1 ? ' tracker' : ' trackers') + ' logged today</p>' +
+        '</div>' +
+      '</div>'
+    );
   }
 
   /** Most recent entry among currently-active trackers, or null. Powers
@@ -84,11 +124,24 @@ App.views = App.views || {};
 
   function summaryCardHtml(tracker, todaysEntries) {
     var total = totalFor(todaysEntries, tracker.id);
-    var display = App.format.amount(total, tracker.unit);
 
     var quickLog = tracker.unit === 'count'
       ? '<button type="button" class="btn btn--primary quick-log-btn" data-action="quick-log" data-id="' + tracker.id + '">+1</button>'
       : '';
+
+    var progressOrTotal;
+    if (tracker.dailyGoal) {
+      var pct = Math.min(100, Math.round((total / tracker.dailyGoal) * 100));
+      progressOrTotal =
+        '<div class="progress-bar">' +
+          '<div class="progress-bar__fill" style="width:' + pct + '%; background:' + tracker.color + ';"></div>' +
+        '</div>' +
+        '<span class="summary-card__goal">' +
+          App.format.amount(total, tracker.unit) + ' / ' + App.format.amount(tracker.dailyGoal, tracker.unit) +
+        '</span>';
+    } else {
+      progressOrTotal = '<span class="summary-card__total">' + App.format.amount(total, tracker.unit) + '</span>';
+    }
 
     return (
       '<div class="summary-card">' +
@@ -97,7 +150,7 @@ App.views = App.views || {};
             '<span class="dot" style="background:' + tracker.color + '"></span>' +
             escapeHtml(tracker.name) +
           '</span>' +
-          '<span class="summary-card__total">' + display + '</span>' +
+          progressOrTotal +
         '</div>' +
         quickLog +
       '</div>'
@@ -168,6 +221,8 @@ App.views = App.views || {};
       section.innerHTML = html;
       return;
     }
+
+    html += heroHtml(activeTrackers, todaysEntries);
 
     html += logFormHtml(activeTrackers, today);
 

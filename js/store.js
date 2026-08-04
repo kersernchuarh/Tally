@@ -11,7 +11,9 @@
 
    Phase 1 built trackers; Phase 2 added entries; Phase 3 read-only via
    dates.js; Phase 4 added editing an entry and JSON import/export; the
-   2026-07-27 design pass added a per-tracker accent `color`.
+   2026-07-27 design pass added a per-tracker accent `color`; Redesign
+   Milestone 2 added an optional per-tracker `dailyGoal`, which is what
+   turns a tracker's Today card from a bare number into a progress bar.
    ========================================================================= */
 
 window.App = window.App || {};
@@ -37,6 +39,14 @@ window.App = window.App || {};
     return typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v);
   }
 
+  /** null means "no goal set" — the Today card falls back to a plain
+   *  number in that case rather than a bar with a fabricated target. */
+  function normalizeDailyGoal(v) {
+    if (v === '' || v === null || v === undefined) return null;
+    var n = Number(v);
+    return isFinite(n) && n > 0 ? n : null;
+  }
+
   function defaultData() {
     return { version: 1, trackers: [], entries: [] };
   }
@@ -55,6 +65,7 @@ window.App = window.App || {};
       name: t.name,
       unit: VALID_UNITS.indexOf(t.unit) !== -1 ? t.unit : 'count',
       color: isHexColor(t.color) ? t.color : COLOR_PALETTE[index % COLOR_PALETTE.length],
+      dailyGoal: normalizeDailyGoal(t.dailyGoal),
       archived: !!t.archived,
       createdAt: isNonEmptyString(t.createdAt) ? t.createdAt : new Date().toISOString()
     };
@@ -134,7 +145,7 @@ window.App = window.App || {};
     });
   }
 
-  function addTracker(name, unit) {
+  function addTracker(name, unit, dailyGoal) {
     name = (name || '').trim();
     if (!name) throw new Error('Tracker name cannot be empty.');
     if (VALID_UNITS.indexOf(unit) === -1) throw new Error('Unknown unit: ' + unit);
@@ -149,6 +160,7 @@ window.App = window.App || {};
       name: name,
       unit: unit,
       color: COLOR_PALETTE[data.trackers.length % COLOR_PALETTE.length],
+      dailyGoal: normalizeDailyGoal(dailyGoal),
       archived: false,
       createdAt: new Date().toISOString()
     };
@@ -158,7 +170,9 @@ window.App = window.App || {};
     return tracker;
   }
 
-  function renameTracker(id, newName) {
+  /** Renamed from renameTracker() in Redesign Milestone 2 now that the
+   *  same inline-edit form also sets a daily goal, not just the name. */
+  function updateTracker(id, newName, dailyGoal) {
     newName = (newName || '').trim();
     if (!newName) throw new Error('Tracker name cannot be empty.');
 
@@ -170,6 +184,7 @@ window.App = window.App || {};
     }
 
     tracker.name = newName;
+    tracker.dailyGoal = normalizeDailyGoal(dailyGoal);
     save(data);
     return tracker;
   }
@@ -273,7 +288,7 @@ window.App = window.App || {};
     load: load,
     save: save,
     addTracker: addTracker,
-    renameTracker: renameTracker,
+    updateTracker: updateTracker,
     archiveTracker: archiveTracker,
     restoreTracker: restoreTracker,
     deleteTracker: deleteTracker,
