@@ -1,13 +1,15 @@
 /* =========================================================================
    view-trackers.js — renders the Trackers tab
 
-   Create / edit / archive / restore / delete trackers (F1–F3, PRD.md §6),
-   plus a Backup card (Phase 4) to export/import the whole data file as
-   JSON — the mitigation for localStorage being wipeable (PRD.md §11).
+   Create trackers (F1, PRD.md §6) plus a Backup card (Phase 4) to
+   export/import the whole data file as JSON — the mitigation for
+   localStorage being wipeable (PRD.md §11).
 
-   Redesign Milestone 2 added an optional daily goal to both the add and
-   edit forms — see store.js's updateTracker() (renamed from
-   renameTracker() now that this form edits more than just the name).
+   Redesign Milestone 3 moved editing/archiving/deleting a tracker to
+   its own detail screen (view-tracker-detail.js) — each row here is
+   now just a tappable summary, not three inline action buttons. Tap a
+   row (or a Today summary card) to open it: app.js's
+   showTrackerDetail(id, 'trackers').
 
    Pattern used throughout this app: render() rebuilds the section's HTML
    entirely from App.store data every time something changes. Nothing here
@@ -26,9 +28,8 @@ App.views = App.views || {};
     { value: 'dollars', label: 'Dollars' }
   ];
 
-  // Local UI state — which tracker (if any) is mid-rename, and whether the
-  // archived list is expanded. Not saved data, just what this screen shows.
-  var editingId = null;
+  // Whether the archived list is expanded. Not saved data, just what
+  // this screen currently shows.
   var showArchived = false;
 
   function unitLabel(unit) {
@@ -53,41 +54,23 @@ App.views = App.views || {};
   }
 
   function trackerRowHtml(tracker, entryCount) {
-    if (editingId === tracker.id) {
-      return (
-        '<li class="tracker-row" data-id="' + tracker.id + '">' +
-          '<form class="tracker-row__edit-form" data-action="edit-submit" data-id="' + tracker.id + '">' +
-            '<input type="text" name="name" value="' + escapeHtml(tracker.name) + '" required aria-label="Name">' +
-            '<input type="number" name="dailyGoal" value="' + (tracker.dailyGoal || '') + '" ' +
-              'min="0.01" step="any" placeholder="Daily goal (optional)" aria-label="Daily goal">' +
-            '<button type="submit" class="btn btn--primary">Save</button>' +
-            '<button type="button" class="btn" data-action="edit-cancel">Cancel</button>' +
-          '</form>' +
-        '</li>'
-      );
-    }
-
     var countLabel = entryCount + (entryCount === 1 ? ' entry' : ' entries');
     var goalLabel = tracker.dailyGoal
       ? ' &middot; Goal: ' + App.format.amount(tracker.dailyGoal, tracker.unit) + '/day'
       : '';
 
     return (
-      '<li class="tracker-row' + (tracker.archived ? ' tracker-row--archived' : '') + '" data-id="' + tracker.id + '">' +
-        '<div class="tracker-row__info">' +
-          '<span class="tracker-row__name">' +
-            '<span class="dot" style="background:' + tracker.color + '"></span>' +
-            escapeHtml(tracker.name) +
+      '<li class="tracker-row' + (tracker.archived ? ' tracker-row--archived' : '') + '">' +
+        '<button type="button" class="tracker-row__info-btn" data-action="open-detail" data-id="' + tracker.id + '">' +
+          '<span class="tracker-row__info">' +
+            '<span class="tracker-row__name">' +
+              '<span class="dot" style="background:' + tracker.color + '"></span>' +
+              escapeHtml(tracker.name) +
+            '</span>' +
+            '<span class="tracker-row__meta">' + unitLabel(tracker.unit) + ' &middot; ' + countLabel + goalLabel + '</span>' +
           '</span>' +
-          '<span class="tracker-row__meta">' + unitLabel(tracker.unit) + ' &middot; ' + countLabel + goalLabel + '</span>' +
-        '</div>' +
-        '<div class="tracker-row__actions">' +
-          '<button type="button" class="btn" data-action="edit" data-id="' + tracker.id + '">Edit</button>' +
-          (tracker.archived
-            ? '<button type="button" class="btn" data-action="restore" data-id="' + tracker.id + '">Restore</button>'
-            : '<button type="button" class="btn" data-action="archive" data-id="' + tracker.id + '">Archive</button>') +
-          '<button type="button" class="btn btn--danger" data-action="delete" data-id="' + tracker.id + '">Delete</button>' +
-        '</div>' +
+          '<span class="tracker-row__chevron" aria-hidden="true">&rsaquo;</span>' +
+        '</button>' +
       '</li>'
     );
   }
@@ -228,20 +211,6 @@ App.views = App.views || {};
       }
       render();
     }
-
-    if (action === 'edit-submit') {
-      var id = form.dataset.id;
-      var editedName = form.elements.name.value.trim();
-      var editedGoal = form.elements.dailyGoal.value;
-      try {
-        App.store.updateTracker(id, editedName, editedGoal);
-      } catch (err) {
-        alert(err.message);
-        return;
-      }
-      editingId = null;
-      render();
-    }
   }
 
   function handleClick(e) {
@@ -251,45 +220,8 @@ App.views = App.views || {};
     var action = button.dataset.action;
     var id = button.dataset.id;
 
-    if (action === 'edit') {
-      editingId = id;
-      render();
-      return;
-    }
-
-    if (action === 'edit-cancel') {
-      editingId = null;
-      render();
-      return;
-    }
-
-    if (action === 'archive') {
-      App.store.archiveTracker(id);
-      render();
-      return;
-    }
-
-    if (action === 'restore') {
-      App.store.restoreTracker(id);
-      render();
-      return;
-    }
-
-    if (action === 'delete') {
-      var data = App.store.load();
-      var tracker = data.trackers.filter(function (t) { return t.id === id; })[0];
-      var count = countEntriesFor(data, id);
-
-      var message = 'Delete "' + (tracker ? tracker.name : 'this tracker') + '"?';
-      if (count > 0) {
-        message += ' This will also permanently delete ' + count +
-          (count === 1 ? ' entry' : ' entries') + '.';
-      }
-
-      if (window.confirm(message)) {
-        App.store.deleteTracker(id);
-        render();
-      }
+    if (action === 'open-detail') {
+      showTrackerDetail(id, 'trackers');
       return;
     }
 
@@ -347,19 +279,11 @@ App.views = App.views || {};
     reader.readAsText(file);
   }
 
-  function handleKeydown(e) {
-    if (e.key !== 'Escape') return;
-    if (!e.target.closest('form[data-action="edit-submit"]')) return;
-    editingId = null;
-    render();
-  }
-
   var section = document.getElementById('view-trackers');
   if (section) {
     section.addEventListener('submit', handleSubmit);
     section.addEventListener('click', handleClick);
     section.addEventListener('change', handleChange);
-    section.addEventListener('keydown', handleKeydown);
   }
 
   App.views.trackers = { render: render };

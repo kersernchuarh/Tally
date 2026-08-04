@@ -10,6 +10,13 @@
    same "tab" class and data-view attributes as the desktop tabs, so
    showView()'s querySelectorAll('.tab') already covers them — no new
    navigation logic needed, just more buttons in the DOM.
+
+   Milestone 3 adds a 4th .view — tracker detail — that isn't one of the
+   three tab destinations. It's opened by tapping a tracker (from Today
+   or Trackers) via showTrackerDetail(), and closed back to whichever of
+   those it was opened from via closeTrackerDetail(). There's no back-
+   button history stack in this app; detailReturnView is the entire
+   "history" it needs.
    ========================================================================= */
 
 window.App = window.App || {};
@@ -32,6 +39,35 @@ function showView(name) {
   if (App.views[name] && App.views[name].render) {
     App.views[name].render();
   }
+}
+
+// Which tab to return to when the tracker detail screen closes.
+var detailReturnView = 'trackers';
+
+/**
+ * Open the tracker detail screen for `trackerId`. `returnTo` ("today" or
+ * "trackers") records where to go back to, since detail isn't reachable
+ * from a tab button and so isn't part of showView()'s tab/view pairing.
+ */
+function showTrackerDetail(trackerId, returnTo) {
+  detailReturnView = returnTo || 'trackers';
+
+  document.querySelectorAll('.view').forEach(function (section) {
+    section.classList.toggle('is-active', section.id === 'view-tracker-detail');
+  });
+
+  // No tab button corresponds to the detail screen, so none should look active.
+  document.querySelectorAll('.tab').forEach(function (button) {
+    button.classList.remove('is-active');
+  });
+
+  if (App.views.trackerDetail) {
+    App.views.trackerDetail.render(trackerId);
+  }
+}
+
+function closeTrackerDetail() {
+  showView(detailReturnView);
 }
 
 /**

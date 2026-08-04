@@ -22,6 +22,11 @@
    and a progress bar on any tracker card that has a dailyGoal set
    (store.js) — trackers without a goal keep the plain total they always
    had, no fabricated target.
+
+   Milestone 3: each summary card's name/total area is now a button that
+   opens that tracker's own detail screen (app.js's showTrackerDetail),
+   without disturbing the separate quick-log "+1" button that already
+   lived on the same card.
    ========================================================================= */
 
 window.App = window.App || {};
@@ -131,11 +136,13 @@ App.views = App.views || {};
 
     var progressOrTotal;
     if (tracker.dailyGoal) {
+      // Spans, not divs — this whole block sits inside a <button> below,
+      // and only phrasing content (no block elements) belongs in there.
       var pct = Math.min(100, Math.round((total / tracker.dailyGoal) * 100));
       progressOrTotal =
-        '<div class="progress-bar">' +
-          '<div class="progress-bar__fill" style="width:' + pct + '%; background:' + tracker.color + ';"></div>' +
-        '</div>' +
+        '<span class="progress-bar">' +
+          '<span class="progress-bar__fill" style="width:' + pct + '%; background:' + tracker.color + ';"></span>' +
+        '</span>' +
         '<span class="summary-card__goal">' +
           App.format.amount(total, tracker.unit) + ' / ' + App.format.amount(tracker.dailyGoal, tracker.unit) +
         '</span>';
@@ -145,13 +152,13 @@ App.views = App.views || {};
 
     return (
       '<div class="summary-card">' +
-        '<div class="summary-card__info">' +
+        '<button type="button" class="summary-card__info" data-action="open-detail" data-id="' + tracker.id + '">' +
           '<span class="summary-card__name">' +
             '<span class="dot" style="background:' + tracker.color + '"></span>' +
             escapeHtml(tracker.name) +
           '</span>' +
           progressOrTotal +
-        '</div>' +
+        '</button>' +
         quickLog +
       '</div>'
     );
@@ -303,6 +310,11 @@ App.views = App.views || {};
 
     if (action === 'go-to-trackers') {
       showView('trackers');
+      return;
+    }
+
+    if (action === 'open-detail') {
+      showTrackerDetail(button.dataset.id, 'today');
       return;
     }
 

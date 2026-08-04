@@ -491,16 +491,13 @@ body {
   gap: var(--space-2);
 }
 
+/* A tracker row is now one big tappable button — Edit/Archive/Delete
+   moved to the detail screen it opens (Redesign Milestone 3). */
 .tracker-row {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: var(--space-3) var(--space-4);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  flex-wrap: wrap;
+  overflow: hidden; /* keeps the button's own hover fill inside the rounded corners */
   transition: box-shadow var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
 }
 
@@ -512,6 +509,22 @@ body {
 
 .tracker-row--archived {
   opacity: 0.6;
+}
+
+.tracker-row__info-btn {
+  appearance: none;
+  border: none;
+  background: none;
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
 }
 
 .tracker-row__info {
@@ -530,32 +543,10 @@ body {
   color: var(--color-text-dim);
 }
 
-.tracker-row__actions {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
-
-.tracker-row__actions .btn {
-  padding: var(--space-1) var(--space-3);
-  font-size: 0.8125rem;
-}
-
-.tracker-row__edit-form {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-  width: 100%;
-  align-items: center;
-}
-
-.tracker-row__edit-form input {
-  flex: 1;
-  min-width: 120px;
-  font: inherit;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+.tracker-row__chevron {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  color: var(--color-text-dim);
 }
 
 .archived-toggle {
@@ -694,6 +685,14 @@ body {
 }
 
 .summary-card__info {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -708,6 +707,7 @@ body {
 }
 
 .progress-bar {
+  display: block;
   width: 100%;
   height: 8px;
   border-radius: 999px;
@@ -717,6 +717,7 @@ body {
 }
 
 .progress-bar__fill {
+  display: block;
   height: 100%;
   border-radius: 999px;
   transition: width 0.3s ease;
@@ -957,6 +958,99 @@ body {
 .search-bar select:focus {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
+}
+
+/* ---- Tracker detail screen (Redesign Milestone 3) -------------------------
+   Not one of the three tabs — see view-tracker-detail.js and app.js's
+   showTrackerDetail()/closeTrackerDetail(). */
+.back-btn {
+  margin-bottom: var(--space-4);
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.detail-header__title {
+  margin-bottom: 0;
+}
+
+.detail-stats {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.detail-stat {
+  flex: 1;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-stat__value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.detail-stat__label {
+  font-size: 0.6875rem;
+  color: var(--color-text-dim);
+}
+
+.activity-strip {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-1);
+  margin-bottom: var(--space-5);
+}
+
+.activity-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.activity-cell__box {
+  display: block;
+  width: 100%;
+  height: 36px;
+  border-radius: var(--radius-sm);
+}
+
+.activity-cell__label {
+  font-size: 0.6875rem;
+  color: var(--color-text-dim);
+  font-weight: 600;
+}
+
+.detail-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.detail-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.detail-edit-form .field {
+  margin-bottom: 0;
 }
 
 /* ---- Footer ------------------------------------------------------------- */

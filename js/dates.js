@@ -100,6 +100,13 @@ window.App = window.App || {};
     return new Date(Number(parts[0]), Number(parts[1]), 0).getDate();
   }
 
+  /** Single-letter weekday ("M", "T", "W"...) for a 7-day activity strip
+   *  (Redesign Milestone 3). Intentionally ambiguous (Tue/Thu both "T")
+   *  — the same convention every calendar app's week-row uses. */
+  function weekdayLetter(dateStr) {
+    return toDate(dateStr).toLocaleDateString(undefined, { weekday: 'narrow' });
+  }
+
   App.dates = {
     todayString: todayString,
     addDays: addDays,
@@ -110,6 +117,7 @@ window.App = window.App || {};
     shiftMonth: shiftMonth,
     yearKey: yearKey,
     shiftYear: shiftYear,
-    daysInMonth: daysInMonth
+    daysInMonth: daysInMonth,
+    weekdayLetter: weekdayLetter
   };
 })();
