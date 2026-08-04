@@ -1,10 +1,15 @@
 /* =========================================================================
-   app.js — boot and tab navigation
+   app.js — boot, tab navigation, and shell-level controls
 
    Loads last (see index.html) because it's the only file that needs every
    other piece already in place. Phase 0's whole job: prove the page wires
    up correctly and switching tabs works. Later phases add a call to each
    view's .render() here, once those views actually do something.
+
+   The bottom-nav buttons added in the redesign's Milestone 1 reuse the
+   same "tab" class and data-view attributes as the desktop tabs, so
+   showView()'s querySelectorAll('.tab') already covers them — no new
+   navigation logic needed, just more buttons in the DOM.
    ========================================================================= */
 
 window.App = window.App || {};
@@ -29,6 +34,21 @@ function showView(name) {
   }
 }
 
+/**
+ * The mobile floating quick-add button: jump to Today and focus the log
+ * form's amount field. If there are no trackers yet, Today just shows
+ * its own "create a tracker" empty state instead — nothing to focus.
+ */
+function handleQuickAdd() {
+  showView('today');
+
+  var amountInput = document.getElementById('log-amount');
+  if (amountInput) {
+    amountInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    amountInput.focus();
+  }
+}
+
 function renderHeaderDate() {
   var el = document.getElementById('header-date');
   if (!el) return;
@@ -48,6 +68,9 @@ function init() {
       showView(button.dataset.view);
     });
   });
+
+  var fab = document.getElementById('quick-add-fab');
+  if (fab) fab.addEventListener('click', handleQuickAdd);
 
   // Render every view once up front so each tab shows real data
   // immediately, not just on first click.

@@ -44,6 +44,7 @@
   --font: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 
   --transition-fast: 0.15s ease;
+  --bottom-nav-height: 64px;
 }
 
 /* ---- Dark mode ------------------------------------------------------------
@@ -194,6 +195,109 @@ body {
   color: var(--color-primary);
   background: var(--color-surface);
   box-shadow: var(--shadow);
+}
+
+/* ---- Mobile bottom navigation + quick-add (Redesign Milestone 1) ---------
+   Two genuinely different nav layouts, swapped by breakpoint rather than
+   one layout squeezed to fit both: the segmented .tabs bar above stays
+   exactly as it was for wider screens; .bottom-nav + .fab are hidden by
+   default and only appear below the mobile breakpoint, where .tabs hides
+   in turn. See REDESIGN.md Milestone 1. */
+.bottom-nav,
+.fab {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .tabs {
+    display: none;
+  }
+
+  .main {
+    padding-bottom: calc(var(--bottom-nav-height) + var(--space-5));
+  }
+
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--bottom-nav-height);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    box-shadow: 0 -4px 16px rgba(99, 102, 241, 0.08);
+    z-index: 10;
+  }
+
+  .bottom-nav__item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: var(--space-1) 0;
+    background: none;
+    border-radius: 0;
+    color: var(--color-text-dim);
+  }
+
+  .bottom-nav__icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: transform var(--transition-fast);
+  }
+
+  .bottom-nav__label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+  }
+
+  /* Same specificity as .tab.is-active (two classes each); this rule
+     wins because it comes later in the file — explicitly cancels the
+     desktop pill's background/shadow rather than relying on that tie
+     breaking silently. */
+  .bottom-nav__item.is-active {
+    color: var(--color-primary);
+    background: none;
+    box-shadow: none;
+  }
+
+  .bottom-nav__item.is-active .bottom-nav__icon {
+    transform: translateY(-2px) scale(1.08);
+  }
+
+  .fab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: var(--space-4);
+    bottom: calc(var(--bottom-nav-height) + var(--space-3));
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-strong));
+    color: #fff;
+    font-size: 1.75rem;
+    font-weight: 400;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+    z-index: 10;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  }
+
+  .fab:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(99, 102, 241, 0.45);
+  }
+
+  .fab:active {
+    transform: scale(0.94);
+  }
 }
 
 /* ---- Main / views ----------------------------------------------------------
@@ -792,7 +896,8 @@ body {
    Not required for v1 (laptop-only per PRD) but nearly free to include now,
    and it's what makes the app usable if you ever do open it on a phone. */
 @media (max-width: 480px) {
-  .tab { text-align: center; padding: var(--space-2) var(--space-1); }
+  /* .tab itself is moot here — .tabs is already hidden below 640px in
+     favor of .bottom-nav (see Milestone 1's block above). */
   .mode-toggle { gap: var(--space-1); }
   .mode-btn { padding: var(--space-1) var(--space-3); font-size: 0.8125rem; }
 }

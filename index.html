@@ -29,6 +29,30 @@
     <button class="tab"           data-view="trackers" type="button">Trackers</button>
   </nav>
 
+  <!-- ===== Mobile bottom navigation (Milestone 1) =====================
+       Same three destinations, restyled as an icon bottom bar for phone
+       widths. Reuses the "tab" class + data-view attributes, so app.js's
+       existing querySelectorAll('.tab') wiring covers these buttons too
+       — nothing else had to change for tab-switching to work here. -->
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Main navigation">
+    <button class="tab bottom-nav__item is-active" data-view="today" type="button">
+      <span class="bottom-nav__icon" aria-hidden="true">🏠</span>
+      <span class="bottom-nav__label">Today</span>
+    </button>
+    <button class="tab bottom-nav__item" data-view="summary" type="button">
+      <span class="bottom-nav__icon" aria-hidden="true">📊</span>
+      <span class="bottom-nav__label">Summary</span>
+    </button>
+    <button class="tab bottom-nav__item" data-view="trackers" type="button">
+      <span class="bottom-nav__icon" aria-hidden="true">🗂️</span>
+      <span class="bottom-nav__label">Trackers</span>
+    </button>
+  </nav>
+
+  <!-- Mobile-only floating quick-add — jumps to Today's log form.
+       Hidden on desktop, where that form is already visible inline. -->
+  <button class="fab" id="quick-add-fab" type="button" aria-label="Add entry">+</button>
+
   <!-- ===== Views ====================================================== -->
   <!-- All three exist in the page at once. Only one is visible at a time
        (CSS class .is-active). This is how a single-page app works. -->
